@@ -1,0 +1,21 @@
+# Python caches / environments
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+.env
+
+# Local artifacts & logs (created by the pipeline)
+artifacts/
+logs/
+*.parquet
+ui/*.log
+ui/*report*.txt
+ui/*section*.log
+
+# OS / tooling noise
+.DS_Store
+Thumbs.db
+
