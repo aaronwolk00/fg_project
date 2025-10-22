@@ -244,6 +244,42 @@
   </div>
 </section>
 
+<section class="card card-pad" id="advancedCtxCard">
+  <h2 class="text-sm font-semibold mb-3">Advanced Context</h2>
+  <div class="grid grid-cols-2 gap-3">
+    <div>
+      <label class="label" for="downSel">Down</label>
+      <select id="downSel" class="input">
+        <option value="1">1st</option>
+        <option value="2">2nd</option>
+        <option value="3">3rd</option>
+        <option value="4" selected>4th</option>
+      </select>
+    </div>
+    <div>
+      <label class="label" for="ytgExact">Yards to go</label>
+      <input id="ytgExact" class="input" type="number" min="0" max="40" step="1" value="5">
+    </div>
+    <div>
+      <label class="label" for="timeMMSS">Time remaining (mm:ss)</label>
+      <input id="timeMMSS" class="input" type="text" placeholder="07:30">
+    </div>
+    <div>
+      <label class="label" for="scoreDiffExact">Score diff (off − def)</label>
+      <input id="scoreDiffExact" class="input" type="number" step="1" value="0">
+    </div>
+    <div>
+      <label class="label" for="toOff">Timeouts (off)</label>
+      <input id="toOff" class="input" type="number" min="0" max="3" value="3">
+    </div>
+    <div>
+      <label class="label" for="toDef">Timeouts (def)</label>
+      <input id="toDef" class="input" type="number" min="0" max="3" value="3">
+    </div>
+  </div>
+  <p class="text-[11px] mt-2 text-ink-500">Exact inputs override bins for decisions; Attempt% still uses nearest bins.</p>
+</section>
+
 <!-- OPTIONAL: Wind direction segmented (place under Context or Scenario if desired) -->
 <section class="card card-pad" id="windDirCard">
   <h2 class="text-sm font-semibold mb-3">Wind Direction</h2>
@@ -315,41 +351,7 @@
         </div>
       </section>
 
-      <section class="card card-pad" id="advancedCtxCard">
-        <h2 class="text-sm font-semibold mb-3">Advanced Context</h2>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="label" for="downSel">Down</label>
-            <select id="downSel" class="input">
-              <option value="1">1st</option>
-              <option value="2">2nd</option>
-              <option value="3">3rd</option>
-              <option value="4" selected>4th</option>
-            </select>
-          </div>
-          <div>
-            <label class="label" for="ytgExact">Yards to go</label>
-            <input id="ytgExact" class="input" type="number" min="0" max="40" step="1" value="5">
-          </div>
-          <div>
-            <label class="label" for="timeMMSS">Time remaining (mm:ss)</label>
-            <input id="timeMMSS" class="input" type="text" placeholder="07:30">
-          </div>
-          <div>
-            <label class="label" for="scoreDiffExact">Score diff (off − def)</label>
-            <input id="scoreDiffExact" class="input" type="number" step="1" value="0">
-          </div>
-          <div>
-            <label class="label" for="toOff">Timeouts (off)</label>
-            <input id="toOff" class="input" type="number" min="0" max="3" value="3">
-          </div>
-          <div>
-            <label class="label" for="toDef">Timeouts (def)</label>
-            <input id="toDef" class="input" type="number" min="0" max="3" value="3">
-          </div>
-        </div>
-        <p class="text-[11px] mt-2 text-ink-500">Exact inputs override bins for decisions; Attempt% still uses nearest bins.</p>
-      </section>
+      
       
 
       <!-- Notes/help -->
@@ -367,12 +369,17 @@
     <section class="lg:col-span-8 space-y-3">
       <!-- Tabs -->
       <div class="flex items-center gap-2">
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="decisionTab">Decision Edge</button>
         <button class="tab-btn" role="tab" aria-selected="true" data-tab="makeTab">Make%</button>
         <button class="tab-btn" role="tab" aria-selected="false" data-tab="attemptTab">Attempt%</button>
-        <button class="tab-btn" role="tab" aria-selected="false" data-tab="decisionTab">Decision Edge</button>
       </div>
 
       <!-- Panels -->
+      <div class="card card-pad hidden" id="decisionTab" role="tabpanel">
+        <div id="decisionChart" class="h-[380px] w-full bg-ink-100/60 rounded-lg border border-ink-200 flex items-center justify-center text-ink-500">
+          <span class="text-sm">Decision Edge chart stub</span>
+        </div>
+      </div>
       <div class="card card-pad" id="makeTab" role="tabpanel">
         <div id="makeChart" class="h-[380px] w-full bg-ink-100/60 rounded-lg border border-ink-200 flex items-center justify-center text-ink-500">
           <span class="text-sm">Make% chart stub</span>
@@ -385,11 +392,6 @@
         </div>
       </div>
 
-      <div class="card card-pad hidden" id="decisionTab" role="tabpanel">
-        <div id="decisionChart" class="h-[380px] w-full bg-ink-100/60 rounded-lg border border-ink-200 flex items-center justify-center text-ink-500">
-          <span class="text-sm">Decision Edge chart stub</span>
-        </div>
-      </div>
     </section>
   </main>
 
@@ -1036,88 +1038,123 @@ async function deriveTeamsFromDepthCharts(csvUrl){
 
   // ---------- Populate from DataStore ----------
   async function initSelectors(){
-    // Ensure DataStore is ready
-    const ds = window.FG.DataStore || await window.FG.DataStoreClass?.init?.({ baseUrl: '.' }) || null;
+  // Ensure DataStore is ready
+  const ds = window.FG.DataStore || await window.FG.DataStoreClass?.init?.({ baseUrl: '.' }) || null;
 
-    // Teams
-    let teams = ds?.getTeams?.() ?? [];
-    if (!teams.length) {
+  // Teams
+  let teams = ds?.getTeams?.() ?? [];
+  if (!teams.length) {
+    try {
       teams = (await deriveTeamsFromDepthCharts('./depth_charts.csv')) ?? [];
-    }
-    if (!teams.length) teams = NFL_TEAMS;
-    if(teamTop){
-      teamTop.innerHTML = ''; teamTop.appendChild(option('— select —',''));
-      for(const t of teams){ teamTop.appendChild(option(t,t)); }
-    }
-    if(teamLR){
-      teamLR.innerHTML = ''; teamLR.appendChild(option('— select —',''));
-      for(const t of teams){ teamLR.appendChild(option(t,t)); }
-    }
+    } catch { /* noop */ }
+  }
+  if (!teams.length) teams = NFL_TEAMS;
 
-    // Team → kicker binding (both top and left)
-    function fillKickers(selectEl, team){
-      if(!selectEl) return;
-      selectEl.innerHTML='';
-      if(!team){ selectEl.disabled=true; selectEl.appendChild(option('— select team first —','')); return; }
-      const ks = ds?.getKickers?.(team) || [];
-      if(!ks.length){ selectEl.disabled=true; selectEl.appendChild(option('— no kickers —','')); return; }
-      selectEl.disabled=false;
-      const starter = ks.find(k=> !!k.starter);
-      for(const k of ks){
-        const isInactive = (k.active===false) || (String(k.status||'').toLowerCase()==='inactive');
-        const label = k.name + (starter && k.id===starter.id ? ' (starter)' : '');
-        selectEl.appendChild(option(label, String(k.id), { disabled: isInactive }));
-      }
-      selectEl.value = String((starter?.id) ?? ks[0].id);
+  // Populate team selects
+  if (teamTop){
+    teamTop.innerHTML = '';
+    teamTop.appendChild(option('— select —',''));
+    for (const t of teams) teamTop.appendChild(option(t,t));
+  }
+  if (teamLR){
+    teamLR.innerHTML = '';
+    teamLR.appendChild(option('— select —',''));
+    for (const t of teams) teamLR.appendChild(option(t,t));
+  }
+
+  // Team → kicker binding (works with DataStore v2 or bootstrap roster)
+  function fillKickers(selectEl, team){
+    if(!selectEl) return;
+    selectEl.innerHTML = '';
+    if(!team){
+      selectEl.disabled = true;
+      selectEl.appendChild(option('— select team first —',''));
+      return;
     }
 
-    function onTeamChange(newTeam){
-      state.team = newTeam || '';
-      fillKickers(kickerTop, state.team);
-      fillKickers(kickerLR,  state.team);
-      // auto-select starter on both
-      const pick = kickerLR && kickerLR.value ? kickerLR.value : (kickerTop?.value || '');
-      state.kicker = pick || '';
-      syncSelectValues();
-      emitState();
+    const ks =
+      (ds?.getKickersByTeam?.(team)) ||
+      (ds?.getKickers?.(team)) ||
+      [];
+
+    if(!ks.length){
+      selectEl.disabled = true;
+      selectEl.appendChild(option('— no kickers —',''));
+      return;
     }
 
-    function onKickerChange(newKicker){
-      state.kicker = newKicker || '';
-      syncSelectValues();
-      emitState();
+    selectEl.disabled = false;
+
+    const isStarter = k => !!(k.isStarter || k.starter);
+    const isActive  = k => (k.active !== false) && !/inactive/i.test(String(k.status||''));
+
+    const starter     = ks.find(isStarter);
+    const firstActive = ks.find(isActive) || ks[0];
+
+    for(const k of ks){
+      const label = `${k.name}${isStarter(k) ? ' (starter)' : ''}`;
+      const opt = option(label, String(k.id), { disabled: !isActive(k) });
+      selectEl.appendChild(opt);
     }
 
-    // Initial defaults — if roster has a team with a starter, pick first
-    const firstTeam = teams[0] || '';
-    onTeamChange(firstTeam);
+    // Prefer starter if present, else first active
+    selectEl.value = String((starter?.id) ?? firstActive.id);
+  }
 
-    // Bind changes (top and left)
-    teamTop   && teamTop.addEventListener('change', ()=> onTeamChange(teamTop.value));
-    teamLR    && teamLR.addEventListener('change', ()=> onTeamChange(teamLR.value));
-    kickerTop && kickerTop.addEventListener('change', ()=> onKickerChange(kickerTop.value));
-    kickerLR  && kickerLR.addEventListener('change', ()=> onKickerChange(kickerLR.value));
+  function onTeamChange(newTeam){
+    state.team = newTeam || '';
 
-    // Env + sliders
-    envIndoorBtn && envIndoorBtn.addEventListener('click', ()=> setEnv('indoor'));
-    envOutdoorBtn&& envOutdoorBtn.addEventListener('click', ()=> setEnv('outdoor'));
+    // Fill both kicker dropdowns
+    fillKickers(kickerTop, state.team);
+    fillKickers(kickerLR,  state.team);
 
-    const syncSliders = ()=>{
-      state.distance = +distance.value; distanceVal && (distanceVal.textContent = state.distance);
-      state.tempF    = +temp.value;     tempVal     && (tempVal.textContent     = state.tempF);
-      state.wind     = +wind.value;     windVal     && (windVal.textContent     = state.wind);
-      paintDistanceTrack();
-      emitState();
-    };
-    distance && distance.addEventListener('input', syncSliders);
-    temp     && temp.addEventListener('input', syncSliders);
-    wind     && wind.addEventListener('input', syncSliders);
+    // Choose selected kicker coherently across both
+    const pick =
+      (kickerLR && kickerLR.value) ||
+      (kickerTop && kickerTop.value) ||
+      '';
 
-    bindWindDir();
-
-    // Emit initial
+    state.kicker = String(pick || '');
+    syncSelectValues();
     emitState();
   }
+
+  function onKickerChange(newKicker){
+    state.kicker = newKicker || '';
+    syncSelectValues();
+    emitState();
+  }
+
+  // Initial defaults — pick first team (populates kickers & selects a default)
+  const firstTeam = teams[0] || '';
+  onTeamChange(firstTeam);
+
+  // Bind changes (top and left)
+  teamTop   && teamTop.addEventListener('change', ()=> onTeamChange(teamTop.value));
+  teamLR    && teamLR.addEventListener('change', ()=> onTeamChange(teamLR.value));
+  kickerTop && kickerTop.addEventListener('change', ()=> onKickerChange(kickerTop.value));
+  kickerLR  && kickerLR.addEventListener('change', ()=> onKickerChange(kickerLR.value));
+
+  // Env + sliders
+  envIndoorBtn && envIndoorBtn.addEventListener('click', ()=> setEnv('indoor'));
+  envOutdoorBtn&& envOutdoorBtn.addEventListener('click', ()=> setEnv('outdoor'));
+
+  const syncSliders = ()=>{
+    state.distance = +distance.value; distanceVal && (distanceVal.textContent = state.distance);
+    state.tempF    = +temp.value;     tempVal     && (tempVal.textContent     = state.tempF);
+    state.wind     = +wind.value;     windVal     && (windVal.textContent     = state.wind);
+    paintDistanceTrack();
+    emitState();
+  };
+  distance && distance.addEventListener('input', syncSliders);
+  temp     && temp.addEventListener('input', syncSliders);
+  wind     && wind.addEventListener('input', syncSliders);
+
+  bindWindDir();
+
+  // Emit initial
+  emitState();
+}
 
   // Kick off after DOM is ready
   if(document.readyState === 'loading'){
@@ -1224,14 +1261,27 @@ Canvas-based; no external chart libs.
         const s = this.state || {};
         const ds = this.ds; if(!ds) return null;
         const env = s.env||'indoor';
-        const tF = s.tempF ?? 60; const wM = s.wind ?? 0;
         const kid = s.kicker || null;
+        const tF  = s.tempF ?? 60;
+        const mph = Number(s.wind ?? 0);
+        let head=0, cross=0;
+        switch(String(s.windDir||'calm')){
+          case 'head':   head =  mph; break;
+          case 'tail':   head = -mph; break;
+          case 'crossL': cross = -mph; break;
+          case 'crossR': cross =  mph; break;
+        }
+        const altitude_m = Number(s.altitude_m ?? (s.alt==='high'?1600 : s.alt==='mid'?500 : 0)) || 0;
   
         const x = []; const league = []; const kicker = [];
         const p10=[]; const p90=[]; // optional
         for(let d=DMIN; d<=DMAX; d++){
           x.push(d);
-          const pL = ds.getMakeProb({ env, distance:d, temp_F:tF, wind_mph:wM });
+          const pL = ds.getMakeProb({
+            env, distance:d, temp_F:tF,
+            wind_mph:mph, wind_head_mps: head*0.44704, wind_cross_mps: cross*0.44704,
+            altitude_m
+          });
           let dK = 0, se=0; const del = ds.getKickerDeltaLogit(kid, d) || {delta_logit:0,se:0};
           dK = +del.delta_logit||0; se=+del.se||0;
           // Shrink delta by its uncertainty (stable default)
@@ -1490,14 +1540,33 @@ Canvas-based attempt chart + coupling, with compare Starter vs Backup toggle.
         const { s, t, y } = binsFromExact(st.scoreDiffExact ?? 0, st.timeRemSec ?? 900, st.ytgExact ?? 5);
         const {starter, backup} = this._findStarterAndBackup();
         const kid = st.kicker || starter?.id || null;
-  
+        const mph = Number(st.wind||0);
+        let head=0, cross=0;
+        switch(String(st.windDir||'calm')){
+          case 'head': head=mph; break;
+          case 'tail': head=-mph; break;
+          case 'crossL': cross=-mph; break;
+          case 'crossR': cross=mph; break;
+        }
+        const altitude_m = Number(st.altitude_m ?? (st.alt==='high'?1600 : st.alt==='mid'?500 : 0)) || 0;
+          
         const x=[], base=[], coupStarter=[], coupBackup=[];
         for(let d=DMIN; d<=DMAX; d++){
           const pA = ds.getAttemptProb({ env, distance:d, score_bin:s, time_bin:t, ytg_bin:y });
           base.push(pA);
-          const pCoupledStarter = ds.getCoupledAttemptProb({ env, distance:d, score_bin:s, time_bin:t, ytg_bin:y, kickerId:kid, temp_F:st.tempF||60, wind_mph:st.wind||0 });
+          const pCoupledStarter = ds.getCoupledAttemptProb({
+            env, distance:d, score_bin:s, time_bin:t, ytg_bin:y, kickerId:kid,
+            temp_F: st.tempF||60,
+            wind_mph: mph, wind_head_mps: head*0.44704, wind_cross_mps: cross*0.44704,
+            altitude_m
+          });
           coupStarter.push(pCoupledStarter);
-          const pCoupledBackup = (this.compare && backup) ? ds.getCoupledAttemptProb({ env, distance:d, score_bin:s, time_bin:t, ytg_bin:y, kickerId:backup.id, temp_F:st.tempF||60, wind_mph:st.wind||0 }) : null;
+          const pCoupledBackup = (this.compare && backup) ? ds.getCoupledAttemptProb({
+            env, distance:d, score_bin:s, time_bin:t, ytg_bin:y, kickerId:backup.id,
+            temp_F: st.tempF||60,
+            wind_mph: mph, wind_head_mps: head*0.44704, wind_cross_mps: cross*0.44704,
+            altitude_m
+          }) : null;
           if(this.compare) coupBackup.push(pCoupledBackup);
           x.push(d);
         }
@@ -1547,29 +1616,80 @@ Canvas-based attempt chart + coupling, with compare Starter vs Backup toggle.
       }
   
       _updateInfo(series){
-        const ds=this.ds, st=this.state; if(!ds||!st) { this.info.textContent=''; return; }
-        const {A,B,C} = ds._sens||{A:0,B:0,C:1};
-        const d = Math.round(st.distance||45);
-        const pA = ds.getAttemptProb({ env:st.env||'indoor', distance:d, score_bin:st.scoreBin||'close', time_bin:st.timeBin||'mid', ytg_bin:st.ytgBin||'med' });
-        const pL = ds.getMakeProb({ env:st.env||'indoor', distance:d, temp_F:st.tempF||60, wind_mph:st.wind||0 });
-        const {starter, backup} = this._findStarterAndBackup();
-  
-        function rowFor(id,label){
-          const dK = ds.getKickerDeltaLogit(id, d).delta_logit || 0; // == logit(PM_k) - logit(PM_L)
-          const lp = A + C*logit(pA) + B*dK; const pC = sigmoid(lp);
-          const sens = pC*(1-pC)*B; // d Attempt / d (delta_make_logit)
-          const pp10 = sens*0.1*100; // per +0.1 logit, in percentage points
-          return `<tr><td class="px-2 py-1 text-ink-700">${label}</td><td class="px-2 py-1">${(pA*100).toFixed(1)}%</td><td class="px-2 py-1">${(pC*100).toFixed(1)}%</td><td class="px-2 py-1">${pp10.toFixed(2)} pp / +0.1 logit</td></tr>`;
+        const ds = this.ds, st = this.state;
+        if(!ds || !st){ this.info.textContent = ''; return; }
+
+        const { A, B, C } = ds._sens || { A:0, B:0, C:1 };
+        const d = Math.round(st.distance || 45);
+        const env = st.env || 'indoor';
+
+        // Use exact-context override (same rules as the chart series)
+        function binsFromExact(score, sec, ytg){
+          const s = (score <= -3) ? 'trail' : (score >= 3 ? 'lead' : 'close');
+          const t = (sec   <= 240) ? 'late'  : (sec   <= 660 ? 'mid'  : 'early');
+          const y = (ytg   <= 3)   ? 'short' : (ytg   <= 6   ? 'med'  : 'long');
+          return { s, t, y };
         }
-  
+        const { s, t, y } = binsFromExact(st.scoreDiffExact ?? 0, st.timeRemSec ?? 900, st.ytgExact ?? 5);
+
+        // Wind components (head/cross in m/s) + altitude
+        const mph = Number(st.wind || 0);
+        const mps = mph * 0.44704;
+        let wind_head_mps = 0, wind_cross_mps = 0;
+        switch(String(st.windDir || 'calm')){
+          case 'head':   wind_head_mps  = +mps; break;
+          case 'tail':   wind_head_mps  = -mps; break;
+          case 'crossL': wind_cross_mps = -mps; break;
+          case 'crossR': wind_cross_mps = +mps; break;
+          default: /* calm */ break;
+        }
+        const altitude_m = Number(st.altitude_m || 0) || 0;
+
+        // Base Attempt and League Make at this point (make uses wind/altitude)
+        const pA = ds.getAttemptProb({ env, distance:d, score_bin:s, time_bin:t, ytg_bin:y });
+        const pL = ds.getMakeProb({
+          env, distance:d,
+          temp_F: st.tempF || 60,
+          wind_mph: st.wind || 0,
+          wind_head_mps, wind_cross_mps, altitude_m
+        });
+
+        // Starter/backup resolution
+        const { starter, backup } = this._findStarterAndBackup();
+        const stLabel = starter ? (starter.name || 'Starter') : 'Kicker';
+        const currKickerId = this.state?.kicker || starter?.id || null;
+
+        // Row builder (use DataStore’s coupled attempt so it matches the chart logic incl. shrink + wind/alt)
+        const rowFor = (id, label) => {
+          const pC = ds.getCoupledAttemptProb({
+            env, distance:d, score_bin:s, time_bin:t, ytg_bin:y,
+            kickerId: id,
+            temp_F: st.tempF || 60,
+            wind_mph: st.wind || 0,
+            wind_head_mps, wind_cross_mps, altitude_m
+          });
+          const sens = pC * (1 - pC) * B;         // d Attempt / d (delta_make_logit)
+          const pp10 = sens * 0.1 * 100;          // per +0.1 logit, in percentage points
+          return `<tr>
+            <td class="px-2 py-1 text-ink-700">${label}</td>
+            <td class="px-2 py-1">${(pA*100).toFixed(1)}%</td>
+            <td class="px-2 py-1">${(pC*100).toFixed(1)}%</td>
+            <td class="px-2 py-1">${pp10.toFixed(2)} pp / +0.1 logit</td>
+          </tr>`;
+        };
+
         const aRow = `<div class="pill">A=${A.toFixed(3)}</div><div class="pill">B=${B.toFixed(3)}</div><div class="pill">C=${C.toFixed(3)}</div>`;
-        const hdr = `<table class="mt-2 border border-ink-200 rounded-lg overflow-hidden text-xs"><thead class="bg-ink-50 text-ink-600"><tr><th class="px-2 py-1 text-left">At ${d}y</th><th class="px-2 py-1 text-left">Base</th><th class="px-2 py-1 text-left">Coupled</th><th class="px-2 py-1 text-left">Sensitivity</th></tr></thead><tbody>`;
-        const stLabel = starter? (starter.name||'Starter') : 'Kicker';
-        let body = rowFor(this.state?.kicker || starter?.id || null, stLabel);
-        if(this.compare && backup){ body += rowFor(backup.id, backup.name||'Backup'); }
-        const tbl = `${aRow}${hdr}${body}</tbody></table>`;
-        this.info.innerHTML = tbl;
+        const hdr  = `<table class="mt-2 border border-ink-200 rounded-lg overflow-hidden text-xs">
+          <thead class="bg-ink-50 text-ink-600">
+            <tr><th class="px-2 py-1 text-left">At ${d}y</th><th class="px-2 py-1 text-left">Base</th><th class="px-2 py-1 text-left">Coupled</th><th class="px-2 py-1 text-left">Sensitivity</th></tr>
+          </thead><tbody>`;
+
+        let body = rowFor(currKickerId, stLabel);
+        if(this.compare && backup){ body += rowFor(backup.id, backup.name || 'Backup'); }
+
+        this.info.innerHTML = `${aRow}${hdr}${body}</tbody></table>`;
       }
+
   
       onHover(evt){
         const rect = this.canvas.getBoundingClientRect(); const x = evt.clientX - rect.left; const y = evt.clientY - rect.top;
@@ -1669,6 +1789,17 @@ Paste this <script> block near the end of index.html AFTER Parts 1–5.
       const base = 0.6 + 0.02*(40 - y100);
       return -clamp(base, 0.2, 1.2);
     }
+
+    function windParts(st){
+    const mph = +st.wind || 0;
+    const dir = st.windDir || 'calm';
+    let head=0, cross=0;
+    if(dir==='head') head =  mph;
+    else if(dir==='tail') head = -mph;
+    else if(dir==='crossL' || dir==='crossR') cross = mph;
+    return { wind_mph: mph, wind_head_mps: head*0.44704, wind_cross_mps: cross*0.44704 };
+  }
+
   
     function computeEdges(ds, st){
       const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -1684,11 +1815,20 @@ Paste this <script> block near the end of index.html AFTER Parts 1–5.
       const toO  = clamp(+st.toOff||3, 0, 3);
       const toD  = clamp(+st.toDef||3, 0, 3);
 
-      // Make league & kicker
-      const pL = ds.getMakeProb({ env, distance:d, temp_F:st.tempF||60, wind_mph:st.wind||0 });
+      const { wind_mph, wind_head_mps, wind_cross_mps } = windParts(st);
+      const altitude_m = (st.altitude_m != null) ? st.altitude_m
+                        : (st.alt==='high' ? 1600 : st.alt==='mid' ? 500 : 0);
+
+      // League & kicker make
+      const pL = ds.getMakeProb({
+        env, distance:d, temp_F: st.tempF||60,
+        wind_mph, wind_head_mps, wind_cross_mps,
+        altitude_m
+      });
       const del = ds.getKickerDeltaLogit(st.kicker||null, d) || {delta_logit:0, se:0};
       const w = 1 / (1 + Math.pow((+del.se||0)/0.8, 2));
-      const pK = 1/(1+Math.exp(-(Math.log(pL/(1-pL)) + (+del.delta_logit||0)*w)));
+      const pK = sigmoid(logit(pL) + (+del.delta_logit||0)*w);
+
 
       // Try WP file by nearest bins (fallback if not present)
       const s = (sd<=-3)?'trail':(sd>=3?'lead':'close');
@@ -1865,35 +2005,110 @@ Paste this <script> block near the end of index.html AFTER Parts 1–5.
   
     // ---------- Mount ----------
     async function mount(){
-      const ds = window.FG?.DataStore || await window.FG?.DataStoreClass?.init?.({ baseUrl: '.' });
-      await loadWPEdges();
-      const panels = ensurePanel(); if(!panels) return;
-  
-      const renderAll = ()=>{
-        const st = window.state || {};
-        const res = computeEdges(ds, st);
-        renderEdges(panels.card, ds, st, res);
-        renderAbout(panels.about, ds);
-      };
-  
-      renderAll();
-      window.addEventListener('fg:stateChanged', renderAll);
+  // Init data + optional WP edges
+  const ds = window.FG?.DataStore || await window.FG?.DataStoreClass?.init?.({ baseUrl: '.' });
+  try { await loadWPEdges(); } catch {}
+
+  // Ensure decision panel containers exist
+  const panels = ensurePanel();
+  if(!panels) return;
+
+  // Make “Decision Edge” the default visible tab
+  (function activateDecisionTab(){
+    const btns = [...document.querySelectorAll('.tab-btn')];
+    const panelEls = {
+      makeTab: document.getElementById('makeTab'),
+      attemptTab: document.getElementById('attemptTab'),
+      decisionTab: document.getElementById('decisionTab')
+    };
+    btns.forEach(btn=>{
+      const isDecision = btn.dataset.tab === 'decisionTab';
+      btn.setAttribute('aria-selected', String(isDecision));
+    });
+    Object.entries(panelEls).forEach(([id, el])=>{
+      if(!el) return;
+      el.classList.toggle('hidden', id !== 'decisionTab');
+    });
+  })();
+
+  // Convert wind speed + direction to head/cross components (m/s)
+  function deriveWindComponents(st){
+    const mph = Number(st.wind || 0);
+    const mps = mph * 0.44704;
+    let head = 0, cross = 0;
+    switch(String(st.windDir||'calm')){
+      case 'head':   head  = +mps; break; // positive = headwind
+      case 'tail':   head  = -mps; break; // negative = tailwind
+      case 'crossL': cross = -mps; break; // left-to-right negative
+      case 'crossR': cross = +mps; break; // right-to-left positive
+      default: /* calm */ break;
     }
-  
-    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', mount); else mount();
+    return { wind_head_mps: head, wind_cross_mps: cross };
+  }
+
+  // Debounced render to avoid flooding on slider drags
+  let rafId = null;
+  const renderAll = ()=>{
+    if(rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(()=>{
+      const st    = window.state || {};
+      const windV = deriveWindComponents(st);
+      const stAug = { ...st, ...windV }; // computeEdges should read wind_* if present
+
+      const res = computeEdges(ds, stAug);
+      renderEdges(panels.card, ds, stAug, res);
+      renderAbout(panels.about, ds);
+    });
+  };
+
+  // Initial paint + reactive updates
+  renderAll();
+  window.addEventListener('fg:stateChanged', renderAll);
+}
+
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', mount);
+}else{
+  mount();
+}
+
   })();
   </script>
   
   <script id="fg-bootstrap-selectors-stadiums">
     (function(){
-      async function textFetch(url){ try{ const r=await fetch(url+'?v='+Date.now()); if(!r.ok) return null; return await r.text(); }catch{ return null; } }
-      // Minimal CSV parser (handles quotes/commas)
-      function parseCSVRow(line){ let out=[],cur='',q=false; for(let i=0;i<line.length;i++){const c=line[i]; if(q){ if(c=='"'){ if(line[i+1]=='"'){cur+='"'; i++;} else {q=false;} } else {cur+=c;} } else { if(c=='"'){q=true;} else if(c==','){ out.push(cur); cur=''; } else { cur+=c; } } } out.push(cur); return out.map(s=>s.trim()); }
-      function parseCSV(txt){ if(!txt) return []; const lines=txt.replace(/\r/g,'').split('\n').filter(l=>l.trim()); if(!lines.length) return []; const head=parseCSVRow(lines.shift()); return lines.map(l=>{const c=parseCSVRow(l),o={}; head.forEach((h,i)=>o[h]=c[i]??''); return o;}); }
-    
+      // --------- tiny fetch + CSV helpers ----------
+      async function textFetch(url){
+        try{ const r = await fetch(url + '?v=' + Date.now()); if(!r.ok) return null; return await r.text(); }
+        catch{ return null; }
+      }
+      function parseCSVRow(line){
+        let out=[],cur='',q=false;
+        for(let i=0;i<line.length;i++){
+          const c=line[i];
+          if(q){
+            if(c=='"'){ if(line[i+1]=='"'){cur+='"'; i++;} else {q=false;} }
+            else cur+=c;
+          }else{
+            if(c=='"'){ q=true; }
+            else if(c==','){ out.push(cur); cur=''; }
+            else cur+=c;
+          }
+        }
+        out.push(cur);
+        return out.map(s=>s.trim());
+      }
+      function parseCSV(txt){
+        if(!txt) return [];
+        const lines=txt.replace(/\r/g,'').split('\n').filter(l=>l.trim());
+        if(!lines.length) return [];
+        const head=parseCSVRow(lines.shift());
+        return lines.map(l=>{ const c=parseCSVRow(l), o={}; head.forEach((h,i)=> o[h]=c[i]??''); return o; });
+      }
+  
       const ds = window.FG?.DataStore || {};
-    
-      // ----- Roster getters (from nfl_kicker_roster.json if DataStore didn’t define them) -----
+  
+      // --------- Roster getters (fallback if DataStore didn’t set them) ----------
       async function ensureRosterGetters(){
         if (ds.getTeams && ds.getKickersByTeam && ds.getStarterForTeam) {
           try { if ((ds.getTeams()||[]).length) return; } catch {}
@@ -1901,6 +2116,7 @@ Paste this <script> block near the end of index.html AFTER Parts 1–5.
         let roster = ds.roster || null;
         if (!roster) { try{ roster = await fetch('./nfl_kicker_roster.json?v='+Date.now()).then(r=>r.json()); }catch{} }
         if (!Array.isArray(roster)) { console.warn('Roster JSON missing'); return; }
+  
         const byTeam = new Map();
         for (const r of roster){
           const t=(r.team||r.posteam||r.team_abbr||r.Team||'').toUpperCase(); if(!t) continue;
@@ -1914,100 +2130,357 @@ Paste this <script> block near the end of index.html AFTER Parts 1–5.
           if(!byTeam.has(t)) byTeam.set(t, []);
           byTeam.get(t).push(row);
         }
+  
         ds.getTeams = ()=> Array.from(byTeam.keys()).sort();
-        ds.getKickersByTeam = (team)=> (byTeam.get((team||'').toUpperCase()) || []).sort((a,b)=> (b.isStarter - a.isStarter) || a.name.localeCompare(b.name));
+        ds.getKickersByTeam = (team)=> (byTeam.get((team||'').toUpperCase()) || [])
+            .sort((a,b)=> (b.isStarter - a.isStarter) || a.name.localeCompare(b.name));
         ds.getStarterForTeam = (team)=> (ds.getKickersByTeam(team)[0] || null);
+  
         window.FG.DataStore = Object.assign(window.FG.DataStore||{}, ds);
       }
-    
-      // ----- Stadiums from CSV (your ui/team_stadiums.csv) -----
+  
+      // --------- Stadiums (from ./team_stadiums.csv) ----------
       async function ensureStadiums(){
-        if (ds.getStadiums && ds.inferVenue) return;
-        let rows=[]; const txt = await textFetch('./team_stadiums.csv'); if(txt) rows = parseCSV(txt);
+        // Already wired?
+        if (ds.getStadiums && ds.getAllStadiums && ds.getVenueById && ds.inferVenue) return;
+  
+        let rows=[]; const txt = await textFetch('./team_stadiums.csv');
+        if(txt) rows = parseCSV(txt);
+  
+        // Normalize + index
+        const byTeam = new Map();
+        const byId   = new Map();
+        const all    = [];
+  
+        function normRow(r){
+          const team = String(r.team||r.team_fastr||'').toUpperCase();
+          const name = r.stadium_name || r.stadium || r.venue || '';
+          const id   = (r.stadium_id || r.stadium || r.venue || name || '').toString();
+          const roof = String(r.roof_type||r.roof||'').toLowerCase();
+          const env  = (roof.includes('dome') || roof.includes('retract')) ? 'indoor' : 'outdoor';
+          const altm = Number(r.altitude_m || r.altitude || 0) || 0;
+          const is_current = String(r.is_current||'').toLowerCase()==='true';
+          return { id, team, name, roof_type: roof, env, altitude_m: altm, is_current, _raw:r };
+        }
+  
+        for(const r of rows){
+          const v = normRow(r);
+          if(!v.id || !v.name) continue;
+  
+          // byTeam
+          if(v.team){
+            if(!byTeam.has(v.team)) byTeam.set(v.team, []);
+            byTeam.get(v.team).push(v);
+          }
+          // Dedup for "all"
+          if(!byId.has(v.id)){ byId.set(v.id, v); all.push(v); }
+        }
+  
+        // API
         ds.getStadiums = function(team){
           const T=(team||'').toUpperCase();
-          return rows.filter(r => String(r.team||r.team_fastr||'').toUpperCase()===T);
+          return (byTeam.get(T)||[]).slice().sort((a,b)=> (b.is_current - a.is_current) || a.name.localeCompare(b.name));
+        };
+        ds.getAllStadiums = function(){
+          return all.slice().sort((a,b)=> a.name.localeCompare(b.name));
+        };
+        ds.getVenueById = function(id){
+          return byId.get(String(id)) || null;
         };
         ds.inferVenue = function(team){
           const list = ds.getStadiums(team); if(!list.length) return null;
-          const cur = list.find(s => String(s.is_current).toLowerCase()==='true') || list[0];
-          const roof = String(cur.roof_type||'').toLowerCase();
-          const env = (roof.includes('dome') || roof.includes('retract')) ? 'indoor' : 'outdoor';
-          const alt = Number(cur.altitude||cur.altitude_m||0) || 0;
-          return { id: cur.stadium || cur.stadium_name || cur.team_fastr, name: cur.stadium_name||cur.stadium, env, altitude_m: alt, raw: cur };
+          const cur = list.find(s => s.is_current) || list[0];
+          return { id: cur.id, name: cur.name, env: cur.env, altitude_m: cur.altitude_m, raw: cur._raw };
         };
+  
         window.FG.DataStore = Object.assign(window.FG.DataStore||{}, ds);
       }
-    
-      // ----- UI wiring -----
-      function option(label,value){ const o=document.createElement('option'); o.textContent=label; o.value=value; return o; }
-      function fillTeams(){
-        const el=document.getElementById('teamSelect'); if(!el||!ds.getTeams) return;
-        const teams = ds.getTeams(); el.innerHTML=''; el.appendChild(option('— select —',''));
-        teams.forEach(t=> el.appendChild(option(t,t)));
-      }
-      function fillKickers(team){
-        const el=document.getElementById('kickerSelect'); if(!el||!ds.getKickersByTeam) return;
-        const list = ds.getKickersByTeam(team); el.innerHTML='';
-        if(!list.length){ el.appendChild(option('— none —','')); el.disabled=true; return; }
-        el.disabled=false;
-        list.forEach(k=>{
-          const lab = k.name + (k.isStarter?' (starter)':'') + (k.active?'':' [inactive]');
-          const opt = option(lab, k.id); if(!k.active) opt.disabled=true; el.appendChild(opt);
-        });
-      }
-      function fillStadiums(team){
-        const el=document.getElementById('stadiumSelectLR'); if(!el||!ds.getStadiums) return;
-        const venues = ds.getStadiums(team); el.innerHTML='';
-        if(!venues.length){ el.appendChild(option('— no stadiums —','')); el.disabled=true; return; }
-        el.disabled=false;
-        venues.forEach(v=>{ const nm=v.stadium_name||v.stadium||v.team_fastr; const id=v.stadium||nm; el.appendChild(option(nm,id)); });
-      }
-      function emit(){ window.dispatchEvent(new CustomEvent('fg:stateChanged', { detail: {...(window.state||{})} })); }
-    
-      function bindEvents(){
-        const teamSel = document.getElementById('teamSelect');
-        const kickSel = document.getElementById('kickerSelect');
-        const stadSel = document.getElementById('stadiumSelectLR');
-        if(teamSel){
-          teamSel.addEventListener('change', ()=>{
-            const t = teamSel.value||''; window.state = window.state || {}; window.state.team = t;
-            fillKickers(t);
-            const starter = ds.getStarterForTeam && ds.getStarterForTeam(t);
-            if (starter && kickSel){ kickSel.value = starter.id; window.state.kicker = starter.id; }
-            fillStadiums(t);
-            const v = ds.inferVenue && ds.inferVenue(t);
-            if (v){
-              window.state.stadiumId  = v.id;
-              window.state.env        = v.env;
-              window.state.altitude_m = v.altitude_m || 0;
-              if (stadSel){ stadSel.value = v.id; }
+  
+      // --------- UI helpers ----------
+      function option(label, value, extra = {}){
+  const o = document.createElement('option');
+  o.textContent = label ?? '';
+  o.value = value ?? '';
+  if (extra.disabled) o.disabled = true;
+  if (extra.selected) o.selected = true;
+  return o;
+}
 
-              // Reflect altitude seg (Sea/Mid/High)
-              const altSeg = document.querySelector('[aria-label="Altitude"]');
-              if (altSeg){
-                const bin = (window.state.altitude_m >= 1200) ? 'high'
-                          : (window.state.altitude_m >= 300)  ? 'mid'
-                          : 'sea';
-                [...altSeg.querySelectorAll('button[data-alt]')].forEach(b=>{
-                  const on = b.dataset.alt===bin;
-                  b.classList.toggle('on', on);
-                  b.classList.toggle('off', !on);
-                });
-              }
-            }
-            emit();
-          });
-        }
-        if(kickSel){ kickSel.addEventListener('change', ()=>{ window.state = window.state||{}; window.state.kicker = kickSel.value||''; emit(); }); }
-        if(stadSel){ stadSel.addEventListener('change', ()=>{ window.state = window.state||{}; window.state.stadiumId = stadSel.value||''; const vs = ds.getStadiums && ds.getStadiums(window.state.team||''); const v = vs? vs.find(s => (s.stadium||s.stadium_name)===window.state.stadiumId) : null; if(v){ const roof=String(v.roof_type||'').toLowerCase(); window.state.env = (roof.includes('dome')||roof.includes('retract'))?'indoor':'outdoor'; window.state.altitude_m = Number(v.altitude||v.altitude_m||0)||0; } emit(); }); }
+function emit(){
+  window.dispatchEvent(
+    new CustomEvent('fg:stateChanged', { detail: { ...(window.state || {}) } })
+  );
+}
+
+function feet(m){ return Math.round((Number(m) || 0) * 3.28084); }
+
+function altitudeBin(m){
+  const ft = feet(m);
+  if (ft >= 4000) return 'high';
+  if (ft >= 1000) return 'mid';
+  return 'sea';
+}
+
+function annotateAltitudeSeg(){
+  const seg = document.querySelector('[aria-label="Altitude"]');
+  if (!seg) return;
+
+  const RANGE_HINT = {
+    sea: '0–999 ft',
+    mid: '1,000–3,999 ft',
+    high: '4,000+ ft'
+  };
+
+  [...seg.querySelectorAll('button[data-alt]')].forEach(btn => {
+    if (btn.dataset.hinted === '1') return; // only once
+    const label = (btn.textContent || '').trim();
+
+    // Add a tiny range hint under the label (inline styles so it works without JIT)
+    const hint = RANGE_HINT[btn.dataset.alt] || '';
+    btn.innerHTML =
+      `${label}<span style="display:block;font-size:10px;line-height:1;opacity:.65;margin-top:2px">${hint}</span>`;
+    btn.dataset.hinted = '1';
+  });
+}
+
+function reflectAltitudeSeg(meters){
+  const seg = document.querySelector('[aria-label="Altitude"]');
+  if (!seg) return;
+
+  const bin = altitudeBin(meters);
+  const ft  = feet(meters).toLocaleString();
+
+  [...seg.querySelectorAll('button[data-alt]')].forEach(btn => {
+    const on = btn.dataset.alt === bin;
+    btn.classList.toggle('on', on);
+    btn.classList.toggle('off', !on);
+    btn.setAttribute('aria-pressed', String(on));
+  });
+
+  // Put the exact feet as a tooltip on the selected button (non-intrusive detail)
+  const selected = seg.querySelector(`button[data-alt="${bin}"]`);
+  if (selected) selected.title = `${ft} ft`;
+}
+
+  
+      // --------- Fillers ----------
+      function fillTeams(){
+        const el=document.getElementById('teamSelect'); 
+        const elLR=document.getElementById('teamSelectLR');
+        if(!ds.getTeams) return;
+        const teams = ds.getTeams();
+        if(el){ el.innerHTML=''; el.appendChild(option('— select —','')); teams.forEach(t=> el.appendChild(option(t,t))); }
+        if(elLR){ elLR.innerHTML=''; elLR.appendChild(option('— select —','')); teams.forEach(t=> elLR.appendChild(option(t,t))); }
       }
-    
-      async function init(){ await ensureRosterGetters(); await ensureStadiums(); fillTeams(); bindEvents(); }
-      if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init); else init();
+  
+      function fillKickers(team){
+        const top  = document.getElementById('kickerSelect');
+        const left = document.getElementById('kickerSelectLR');
+
+        // If no team or no DS API, disable both selects gracefully
+        const noTeamOrAPI = !team || !(ds?.getKickersByTeam || ds?.getKickers);
+        if (noTeamOrAPI){
+          [top, left].forEach(el=>{
+            if(!el) return;
+            el.innerHTML = '';
+            el.appendChild(option('— select team first —',''));
+            el.disabled = true;
+          });
+          return '';
+        }
+
+        // Fetch list (prefer getKickersByTeam)
+        const list = (ds.getKickersByTeam ? ds.getKickersByTeam(team) : ds.getKickers(team)) || [];
+
+        // Helpers
+        const isStarter = k => !!(k.isStarter || k.starter);
+        const isActive  = k => (k.active !== false) && !/inactive|ir|retired/i.test(String(k.status||''));
+        const prevId    = window.state?.kicker ? String(window.state.kicker) : '';
+
+        // Apply options into a given <select>
+        function apply(el){
+          if(!el) return;
+          el.innerHTML = '';
+          if(!list.length){
+            el.appendChild(option('— no kickers —',''));
+            el.disabled = true;
+            return;
+          }
+          el.disabled = false;
+          for(const k of list){
+            const label = `${k.name || k.full_name || 'Kicker'}${isStarter(k) ? ' (starter)' : ''}${isActive(k) ? '' : ' [inactive]'}`;
+            el.appendChild(option(label, String(k.id), { disabled: !isActive(k) }));
+          }
+        }
+
+        apply(top);
+        apply(left);
+
+        // Choose a coherent selected value across both selects:
+        // 1) keep previous selection if still available & active
+        // 2) else pick starter, else first active, else first
+        const hasPrev     = prevId && list.some(k => String(k.id) === prevId && isActive(k));
+        const starter     = list.find(isStarter);
+        const firstActive = list.find(isActive) || list[0];
+        const selectedId  = hasPrev ? prevId : String((starter?.id ?? firstActive?.id ?? ''));
+
+        if (top)  top.value  = selectedId;
+        if (left) left.value = selectedId;
+
+        // Return the selected id (caller may choose to put it into state & emit)
+        return selectedId;
+      }
+
+  
+      function fillStadiums(team){
+        const el=document.getElementById('stadiumSelectLR');
+        if(!el || !ds.getStadiums || !ds.getAllStadiums) return;
+  
+        const teamVenues = ds.getStadiums(team);
+        const allVenues  = ds.getAllStadiums();
+  
+        el.innerHTML='';
+        el.appendChild(option('— select venue —',''));
+  
+        // Optgroup: Team venues
+        if(teamVenues.length){
+          const og1 = document.createElement('optgroup'); og1.label = 'Team venues';
+          teamVenues.forEach(v=>{
+            const ft = feet(v.altitude_m);
+            const lab = `${v.name} • ${v.env} • ${ft} ft`;
+            og1.appendChild(option(lab, v.id));
+          });
+          el.appendChild(og1);
+        }
+  
+        // Optgroup: All venues
+        const og2 = document.createElement('optgroup'); og2.label = 'All venues';
+        allVenues.forEach(v=>{
+          const ft = feet(v.altitude_m);
+          const lab = `${v.name} • ${v.env} • ${ft} ft`;
+          og2.appendChild(option(lab, v.id));
+        });
+        el.appendChild(og2);
+  
+        // Preselect inferred current venue
+        const inf = ds.inferVenue?.(team);
+        if(inf){ el.value = inf.id; }
+        el.disabled = false;
+      }
+  
+      // --------- Bind events (top + left, kept in sync) ----------
+      function bindEvents(){
+        const teamTop  = document.getElementById('teamSelect');
+        const teamLeft = document.getElementById('teamSelectLR');
+        const kickTop  = document.getElementById('kickerSelect');
+        const kickLeft = document.getElementById('kickerSelectLR');
+        const stadSel  = document.getElementById('stadiumSelectLR');
+  
+        function onTeamChange(newTeam){
+          const t = (newTeam||'').toUpperCase();
+          window.state = window.state || {};
+          window.state.team = t;
+  
+          // keep team selects in sync
+          if(teamTop)  teamTop.value  = t;
+          if(teamLeft) teamLeft.value = t;
+  
+          // refill kickers + stadiums, set defaults
+          fillKickers(t);
+          const starter = ds.getStarterForTeam?.(t);
+          if (starter){
+            window.state.kicker = String(starter.id);
+            if(kickTop)  kickTop.value  = String(starter.id);
+            if(kickLeft) kickLeft.value = String(starter.id);
+          }
+  
+          fillStadiums(t);
+          const v = ds.inferVenue?.(t);
+          if (v){
+            window.state.stadiumId  = v.id;
+            window.state.env        = v.env;
+            window.state.altitude_m = v.altitude_m || 0;
+            if (stadSel) stadSel.value = v.id;
+            reflectAltitudeSeg(window.state.altitude_m);
+          }
+          emit();
+        }
+  
+        function onKickerChange(id){
+          window.state = window.state || {};
+          window.state.kicker = id || '';
+          if(kickTop)  kickTop.value  = id;
+          if(kickLeft) kickLeft.value = id;
+          emit();
+        }
+  
+        function onStadiumChange(id){
+          window.state = window.state || {};
+          window.state.stadiumId = id || '';
+          const v = ds.getVenueById?.(id);
+          if(v){
+            const roof=v.roof_type||'';
+            window.state.env = (String(roof).includes('dome')||String(roof).includes('retract')) ? 'indoor' : (v.env||'outdoor');
+            window.state.altitude_m = Number(v.altitude_m||0) || 0;
+            reflectAltitudeSeg(window.state.altitude_m);
+          }
+          emit();
+        }
+  
+        // team changes (TOP + LEFT)
+        teamTop  && teamTop.addEventListener('change',  ()=> onTeamChange(teamTop.value));
+        teamLeft && teamLeft.addEventListener('change', ()=> onTeamChange(teamLeft.value));
+  
+        // kicker changes (TOP + LEFT)
+        kickTop  && kickTop.addEventListener('change',  ()=> onKickerChange(kickTop.value));
+        kickLeft && kickLeft.addEventListener('change', ()=> onKickerChange(kickLeft.value));
+  
+        // stadium change (LEFT)
+        stadSel && stadSel.addEventListener('change', ()=> onStadiumChange(stadSel.value));
+      }
+  
+      // --------- Init ----------
+      async function init(){
+        await ensureRosterGetters();
+        await ensureStadiums();
+        annotateAltitudeSeg();
+        fillTeams();
+  
+        // select first team if none
+        const teams = ds.getTeams?.() || [];
+        const firstTeam = teams[0] || '';
+        if(firstTeam){
+          // set both team selects to firstTeam so fill* calls use the same
+          const teamTop  = document.getElementById('teamSelect');
+          const teamLeft = document.getElementById('teamSelectLR');
+          if(teamTop)  teamTop.value  = firstTeam;
+          if(teamLeft) teamLeft.value = firstTeam;
+          fillKickers(firstTeam);
+          fillStadiums(firstTeam);
+  
+          // seed state from inferred venue
+          const v = ds.inferVenue?.(firstTeam);
+          window.state = Object.assign({
+            team:firstTeam,
+            kicker:(ds.getStarterForTeam?.(firstTeam)||{}).id || '',
+            stadiumId:v?.id || '',
+            env:v?.env || (window.state?.env || 'indoor'),
+            altitude_m:v?.altitude_m || 0
+          }, window.state||{});
+          reflectAltitudeSeg(window.state.altitude_m);
+          emit();
+        }
+  
+        bindEvents();
+      }
+  
+      if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init);
+      else init();
     })();
-    </script>
+  </script>
+  
     
+
     <script>
       (function(){
         const downSel   = document.getElementById('downSel');
