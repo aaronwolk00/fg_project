@@ -915,6 +915,7 @@
       getKickers(team){ return this._kickersByTeam.get(team)||[]; }
   
       // League make probability (no kicker deltas applied)
+      // Replace your getMakeProb with this version
       getMakeProb({
         env = 'indoor',
         distance,
@@ -925,7 +926,7 @@
         altitude_m = 0,
         stadiumId = null
       }) {
-        // Normalize via venue adjustments (wind attenuation, indoor wind=0, altitude fallback)
+        // 1) Venue-normalized inputs (wind attenuation, indoor wind=0, v1 altitude fallback)
         const adj = this._applyVenueAdjustments({
           stadiumId,
           env,
@@ -937,19 +938,35 @@
           altitude_m
         });
 
+        // 2) Schema-aware alignment for keying
+        const gridSchema = this._make?.schema || 1;
+
+        // Always use the binned/rounded mph; head/cross only matter in v2+
+        let keyWindMph   = adj.wind_mph;
+        let keyHeadMps   = adj.wind_head_mps;
+        let keyCrossMps  = adj.wind_cross_mps;
+        let keyAltMeters = adj.altitude_m;
+
+        if (gridSchema < 2) {
+          // v1 grid has speed only; rows were indexed with: head_mps = wind_mph*0.44704, cross=0, altitude=0
+          keyHeadMps   = Math.abs(keyWindMph) * 0.44704;
+          keyCrossMps  = 0;
+          keyAltMeters = 0;
+        }
+
         const key = this._mkKey(
           env,
           adj.distance,
           adj.temp_F,
-          adj.wind_mph,
-          adj.wind_head_mps,
-          adj.wind_cross_mps,
-          adj.altitude_m
+          keyWindMph,
+          keyHeadMps,
+          keyCrossMps,
+          keyAltMeters
         );
 
+        // 3) Lookup (with distance-only fallback)
         let row = this._makeIdx[env].get(key);
         if (!row) {
-          // fallback path: nearest by env + distance only (use adjusted distance)
           const pool = this._make.byEnv[env] || [];
           let best = null, bd = 1e9;
           for (const r of pool) {
@@ -958,24 +975,10 @@
           }
           row = best;
         }
+
         return row ? +row.prob_mean : 0.5;
       }
 
-      // Attempt propensity (league baseline)
-      getAttemptProb({ env='indoor', distance, score_bin='close', time_bin='mid', ytg_bin='med', hash=null }){
-        const key = this._atKey(env, distance, score_bin, time_bin, ytg_bin, hash);
-        let row = this._attemptIdx.get(key);
-        if(!row){
-          // distance-only fallback
-          let best=null, bd=1e9;
-          for(const [k,r] of this._attemptIdx){
-            const parts=k.split('|'); if(parts[0]!==env) continue;
-            const di=+parts[1]; const d=Math.abs(di-distance); if(d<bd){ bd=d; best=r; }
-          }
-          row=best;
-        }
-        return row ? +row.prob_attempt_mean : 0.25;
-      }
 
       // Kicker delta on logit scale
       getKickerDeltaLogit(kickerId, distance){
@@ -2208,66 +2211,57 @@ Paste this <script> block near the end of index.html AFTER Parts 1–5.
   
     // ---------- Mount ----------
     async function mount(){
-  // Init data + optional WP edges
-  const ds = window.FG?.DataStore || await window.FG?.DataStoreClass?.init?.({ baseUrl: '.' });
-  try { await loadWPEdges(); } catch {}
+      const ds = window.FG?.DataStore || await window.FG?.DataStoreClass?.init?.({ baseUrl: '.' });
+      try { await loadWPEdges(); } catch {}
 
-  // Ensure decision panel containers exist
-  const panels = ensurePanel();
-  if(!panels) return;
+      const panels = ensurePanel();
+      if(!panels) return;
 
-  // Make “Decision Edge” the default visible tab
-  (function activateDecisionTab(){
-    const btns = [...document.querySelectorAll('.tab-btn')];
-    const panelEls = {
-      makeTab: document.getElementById('makeTab'),
-      attemptTab: document.getElementById('attemptTab'),
-      decisionTab: document.getElementById('decisionTab')
-    };
-    btns.forEach(btn=>{
-      const isDecision = btn.dataset.tab === 'decisionTab';
-      btn.setAttribute('aria-selected', String(isDecision));
-    });
-    Object.entries(panelEls).forEach(([id, el])=>{
-      if(!el) return;
-      el.classList.toggle('hidden', id !== 'decisionTab');
-    });
-  })();
+      // Remove the About card (or hide it) so it doesn't sit near the top
+      if (panels.about) { panels.about.remove(); }
+      // And don't call renderAbout anymore
 
-  // Convert wind speed + direction to head/cross components (m/s)
-  function deriveWindComponents(st){
-    const mph = Number(st.wind || 0);
-    const mps = mph * 0.44704;
-    let head = 0, cross = 0;
-    switch(String(st.windDir||'calm')){
-      case 'head':   head  = +mps; break; // positive = headwind
-      case 'tail':   head  = -mps; break; // negative = tailwind
-      case 'crossL': cross = -mps; break; // left-to-right negative
-      case 'crossR': cross = +mps; break; // right-to-left positive
-      default: /* calm */ break;
+      (function activateDecisionTab(){
+        const btns = [...document.querySelectorAll('.tab-btn')];
+        const panelEls = {
+          makeTab: document.getElementById('makeTab'),
+          attemptTab: document.getElementById('attemptTab'),
+          decisionTab: document.getElementById('decisionTab')
+        };
+        btns.forEach(btn=> btn.setAttribute('aria-selected', String(btn.dataset.tab === 'decisionTab')));
+        Object.entries(panelEls).forEach(([id, el])=> el && el.classList.toggle('hidden', id !== 'decisionTab'));
+      })();
+
+      function deriveWindComponents(st){
+        const mph = Number(st.wind || 0);
+        const mps = mph * 0.44704;
+        let head = 0, cross = 0;
+        switch(String(st.windDir||'calm')){
+          case 'head':   head  = +mps; break;
+          case 'tail':   head  = -mps; break;
+          case 'crossL': cross = -mps; break;
+          case 'crossR': cross = +mps; break;
+        }
+        return { wind_head_mps: head, wind_cross_mps: cross };
+      }
+
+      let rafId = null;
+      const renderAll = ()=>{
+        if(rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(()=>{
+          const st    = window.state || {};
+          const windV = deriveWindComponents(st);
+          const stAug = { ...st, ...windV };
+          const res = computeEdges(ds, stAug);
+          renderEdges(panels.card, ds, stAug, res);
+          // renderAbout(panels.about, ds); // <-- removed
+        });
+      };
+
+      renderAll();
+      window.addEventListener('fg:stateChanged', renderAll);
     }
-    return { wind_head_mps: head, wind_cross_mps: cross };
-  }
 
-  // Debounced render to avoid flooding on slider drags
-  let rafId = null;
-  const renderAll = ()=>{
-    if(rafId) cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(()=>{
-      const st    = window.state || {};
-      const windV = deriveWindComponents(st);
-      const stAug = { ...st, ...windV }; // computeEdges should read wind_* if present
-
-      const res = computeEdges(ds, stAug);
-      renderEdges(panels.card, ds, stAug, res);
-      renderAbout(panels.about, ds);
-    });
-  };
-
-  // Initial paint + reactive updates
-  renderAll();
-  window.addEventListener('fg:stateChanged', renderAll);
-}
 
 if(document.readyState === 'loading'){
   document.addEventListener('DOMContentLoaded', mount);
