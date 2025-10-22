@@ -1,1 +1,9 @@
-{"note": "logit(Attempt) = A + C*logit(P_attempt_base) + B*(logit(P_make_kicker)-logit(P_make_league))", "A": -0.1245098707139044, "B": 0.6043956025283689, "C": 1.1942776776329735}
+{
+  "note": "logit(Attempt) = A + C*logit(P_attempt_base) + B*(kicker delta on logit(make))",
+  "A": -0.3030143700158866,
+  "B": 0.001930597266001819,
+  "C": 2.268716170697687,
+  "meta": {
+    "n_rows": 11259
+  }
+}

@@ -1,431 +1,1769 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>NFL FG Probability — Coupled (Make × Attempt)</title>
-<style>
-  :root { --bg:#0b0f14; --card:#121820; --muted:#9fb0c3; --acc:#3da9fc; }
-  * { box-sizing: border-box; }
-  body { margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial; background:var(--bg); color:#e6eef7; }
-  .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
-  .card { background:var(--card); border-radius:16px; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,.25); margin-bottom:18px;}
-  h1 { margin:0 0 8px 0; font-size:26px; font-weight:700; }
-  h2 { margin:10px 0 12px 0; font-size:18px; color:var(--muted); }
-  .grid { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
-  .row { display:flex; gap:10px; align-items:center; margin:8px 0; }
-  label { font-size:14px; color:var(--muted); min-width:160px; }
-  input[type="number"], select { background:#0f141b; color:#e6eef7; border:1px solid #263141; border-radius:8px; padding:8px 10px; width:100%; }
-  input[type="range"] { width:100%; }
-  .pill { display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; background:#0f141b; border:1px solid #263141; color:#9fb0c3; }
-  .out { font-size:18px; }
-  .muted { color:#9fb0c3; font-size:12px; }
-  .svgbox { width:100%; height:220px; background:#0f141b; border:1px solid #263141; border-radius:12px; }
-  .warn { color:#ffcc66; }
-  .uploader { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
-  .kmeta { font-size:12px; color:#9fb0c3; }
-  @media (max-width: 960px){ .grid{grid-template-columns:1fr;} label{min-width:140px;} }
-</style>
-</head>
-<body>
-<div class="wrap">
-  <div class="card">
-    <h1>Field Goal Probability — Coupled (Coach View)</h1>
-    <div class="muted">
-      Make model: LGBM (monotone distance) · bagged · isotonic · bilinear (Temp×Wind).<br/>
-      Kicker: recency-weighted Bayesian deltas by distance band (weaker prior at 60+).<br/>
-      Attempt model: league context grid + <em>coupling</em> so Attempt% rises with kicker’s make% advantage.
-    </div>
-    <div id="loadMsg" class="muted"></div>
-    <div class="uploader" id="fallbackUpload" style="display:none">
-      <div><label class="pill">Load make grid</label><input type="file" id="fileGrid" accept=".json"/></div>
-      <div><label class="pill">Load kicker banded JSON</label><input type="file" id="fileKickers" accept=".json"/></div>
-      <div><label class="pill">Load attempt grid</label><input type="file" id="fileAttempt" accept=".json"/></div>
-      <div><label class="pill">Load attempt sensitivity</label><input type="file" id="fileSens" accept=".json"/></div>
-      <button id="btnUseUploads">Use uploaded files</button>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>Inputs</h2>
-    <div class="grid">
-      <div>
-        <div class="row">
-          <label>Distance (yards)</label>
-          <input id="distance" type="range" min="18" max="68" step="1" value="61" oninput="uiDist.value=value; recompute()"/>
-          <input id="uiDist" type="number" min="18" max="68" step="1" value="61" oninput="distance.value=value; recompute()"/>
-        </div>
-        <div class="row">
-          <label>Environment</label>
-          <select id="env" onchange="onEnvChange()">
-            <option value="indoor">Indoor</option>
-            <option value="outdoor" selected>Outdoor</option>
-          </select>
-          <span class="pill">Roof “outdoors” → Outdoor; else Indoor</span>
-        </div>
-        <div class="row">
-          <label>Temperature (°F)</label>
-          <input id="temp" type="number" value="65" step="1" oninput="recompute()"/>
-          <span class="pill">Bilinear (Temp×Wind)</span>
-        </div>
-        <div class="row">
-          <label>Wind (mph)</label>
-          <input id="wind" type="number" value="5" step="1" oninput="recompute()"/>
-          <span class="pill">Indoor forces 0</span>
-        </div>
-      </div>
-
-      <div>
-        <div class="row">
-          <label>Kicker</label>
-          <select id="kicker" onchange="recompute()">
-            <option value="">— none —</option>
-          </select>
-        </div>
-        <div class="row">
-          <label>Context: Score</label>
-          <select id="scoreBin" onchange="recompute()">
-            <option value="trail">Trailing (≤ −3)</option>
-            <option value="close" selected>Close (−2..+2)</option>
-            <option value="lead">Leading (≥ +3)</option>
-          </select>
-        </div>
-        <div class="row">
-          <label>Context: Time (half)</label>
-          <select id="timeBin" onchange="recompute()">
-            <option value="early">Early (≈20:00)</option>
-            <option value="mid">Mid (≈10:00)</option>
-            <option value="late" selected>Late (≈2:00)</option>
-          </select>
-        </div>
-        <div class="row">
-          <label>Context: Yards to go</label>
-          <select id="ytgBin" onchange="recompute()">
-            <option value="short">Short (≤2)</option>
-            <option value="med" selected>Medium (3–6)</option>
-            <option value="long">Long (≥7)</option>
-          </select>
-        </div>
-        <div class="row">
-          <label>Confidence band</label>
-          <select id="band" onchange="recompute()">
-            <option value="80" selected>80% (p10–p90)</option>
-            <option value="68">~68%</option>
-            <option value="90">90%</option>
-          </select>
-        </div>
-      </div>
-    </div>
-    <div id="kmeta" class="kmeta"></div>
-  </div>
-
-  <div class="card">
-    <h2>Coach Readout</h2>
-    <div id="result" class="out">—</div>
-    <div id="details" class="muted">—</div>
-  </div>
-
-  <div class="card">
-    <h2>Distance Profile (Make% | Attempt)</h2>
-    <svg id="chart" class="svgbox" viewBox="0 0 800 220" preserveAspectRatio="none"></svg>
-    <div class="muted">Curve = Make% (bilinear, with kicker banded shift). Shaded = CI. Attempt% is shown in the readout (context- and kicker-adjusted).</div>
-  </div>
-</div>
-
-<script>
-let GRID=null, KICKERS=[], ATTEMPT=null, SENS=null;
-let gridIndex=new Map(), attemptIndex=new Map(), KMAP=new Map();
-let temps=[], winds=[];
-
-const distance  = document.getElementById('distance');
-const uiDist    = document.getElementById('uiDist');
-const envSel    = document.getElementById('env');
-const tempInp   = document.getElementById('temp');
-const windInp   = document.getElementById('wind');
-const kickerSel = document.getElementById('kicker');
-const bandSel   = document.getElementById('band');
-const scoreBin  = document.getElementById('scoreBin');
-const timeBin   = document.getElementById('timeBin');
-const ytgBin    = document.getElementById('ytgBin');
-const loadMsgEl = document.getElementById('loadMsg');
-const kmetaEl   = document.getElementById('kmeta');
-const resultEl  = document.getElementById('result');
-const detailsEl = document.getElementById('details');
-const chartEl   = document.getElementById('chart');
-
-const upWrap       = document.getElementById('fallbackUpload');
-const fileGrid     = document.getElementById('fileGrid');
-const fileKickers  = document.getElementById('fileKickers');
-const fileAttempt  = document.getElementById('fileAttempt');
-const fileSens     = document.getElementById('fileSens');
-const btnUseUploads= document.getElementById('btnUseUploads');
-
-function onEnvChange(){
-  if (envSel.value === 'indoor'){ windInp.value = 0; windInp.disabled = true; }
-  else { windInp.disabled = false; }
-  recompute();
-}
-
-function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
-function logit(p){ p = Math.min(Math.max(p,1e-9), 1-1e-9); return Math.log(p/(1-p)); }
-function sigmoid(x){ return 1/(1+Math.exp(-x)); }
-function pct(x){ return (x*100).toFixed(1) + "%"; }
-
-function buildMakeIndex(){
-  gridIndex.clear();
-  temps = GRID.meta.temps.slice();
-  winds = GRID.meta.winds.slice();
-  for(const r of GRID.grid){
-    gridIndex.set(`${r.indoor_outdoor}|${r.temp_F}|${r.wind_mph}|${r.distance}`, r);
-  }
-}
-function buildAttemptIndex(){
-  attemptIndex.clear();
-  for(const r of ATTEMPT.grid){
-    attemptIndex.set(`${r.indoor_outdoor}|${r.score_bin}|${r.time_bin}|${r.ytg_bin}|${r.distance}`, r);
-  }
-}
-function populateKickers(){
-  KMAP.clear();
-  kickerSel.innerHTML = `<option value="">— none —</option>`;
-  const frag = document.createDocumentFragment();
-  const sorted = [...KICKERS].sort((a,b)=> (b.attempts_eff||0) - (a.attempts_eff||0));
-  for(const k of sorted){
-    const opt = document.createElement('option');
-    opt.value = k.kicker_id;
-    opt.textContent = `${k.kicker_name || k.kicker_id} (effAtt=${(k.attempts_eff||0).toFixed(1)})`;
-    frag.appendChild(opt);
-    KMAP.set(k.kicker_id, k);
-  }
-  kickerSel.appendChild(frag);
-}
-
-function neighbors(val, arr){
-  if (val <= arr[0]) return [arr[0], arr[0]];
-  if (val >= arr[arr.length-1]) return [arr[arr.length-1], arr[arr.length-1]];
-  for (let i=0; i<arr.length-1; i++){
-    if (val >= arr[i] && val <= arr[i+1]) return [arr[i], arr[i+1]];
-  }
-  return [arr[0], arr[0]];
-}
-function nearest(val, arr){
-  let best = arr[0], bd = Math.abs(val-arr[0]);
-  for(const x of arr){ const d = Math.abs(val-x); if (d<bd){ bd=d; best=x; } }
-  return best;
-}
-function lookupMake(env, temp, wind, dist){
-  return gridIndex.get(`${env}|${temp}|${wind}|${dist}`) || null;
-}
-function interpBilinearLogit(env, temp, wind, dist){
-  if (env === 'indoor') wind = 0;
-  const [t0,t1]=neighbors(temp, temps), [w0,w1]=neighbors(wind, winds);
-  const sameT=(t0===t1), sameW=(w0===w1);
-  const r00=lookupMake(env,t0,w0,dist), r10=lookupMake(env,t1,w0,dist),
-        r01=lookupMake(env,t0,w1,dist), r11=lookupMake(env,t1,w1,dist);
-  if (!r00 || (!sameT && !r10) || (!sameW && !r01) || (!sameT && !sameW && !r11)){
-    const tN=nearest(temp,temps), wN=(env==='indoor'?0:nearest(wind,winds));
-    const r=lookupMake(env,tN,wN,dist);
-    if (!r) return null;
-    return {mean:r.prob_mean, lo:r.prob_p10, hi:r.prob_p90, baseMean:r.prob_mean, mode:"nearest"};
-  }
-  function blend(field){
-    const L00=logit(r00[field]), L10=sameT?L00:logit(r10[field]);
-    const L01=sameW?L00:logit(r01[field]), L11=(sameT&&sameW)?L00:logit(r11[field]);
-    const wt=sameT?0:(temp-t0)/(t1-t0), ww=sameW?0:(wind-w0)/(w1-w0);
-    const L0=L00*(1-wt)+L10*wt, L1=L01*(1-wt)+L11*wt;
-    return sigmoid(L0*(1-ww)+L1*ww);
-  }
-  return {mean:blend("prob_mean"), lo:blend("prob_p10"), hi:blend("prob_p90"),
-          baseMean:blend("prob_mean"), mode:"bilinear"};
-}
-
-// kicker band blending
-const BAND_BOUNDS = { short:39, mid:49, long:59 };
-const BLEND_W = 2;
-function bandWeightsForDistance(d){
-  if (d <= BAND_BOUNDS.short - BLEND_W) return {short:1};
-  if (d <  BAND_BOUNDS.short + BLEND_W){ const t=(d-(BAND_BOUNDS.short-BLEND_W))/(2*BLEND_W); return {short:1-t, mid:t}; }
-  if (d <= BAND_BOUNDS.mid - BLEND_W) return {mid:1};
-  if (d <  BAND_BOUNDS.mid + BLEND_W){ const t=(d-(BAND_BOUNDS.mid-BLEND_W))/(2*BLEND_W); return {mid:1-t, long:t}; }
-  if (d <= BAND_BOUNDS.long - BLEND_W) return {long:1};
-  if (d <  BAND_BOUNDS.long + BLEND_W){ const t=(d-(BAND_BOUNDS.long-BLEND_W))/(2*BLEND_W); return {long:1-t, xlong:t}; }
-  return {xlong:1};
-}
-function kickerShiftForDistance(krec, d){
-  if (!krec || !krec.bands) return {delta:0, se:0};
-  const w=bandWeightsForDistance(d); let delta=0, var_sum=0, wsum=0;
-  for (const band of Object.keys(w)){
-    const ww=w[band], b=krec.bands[band];
-    if (!b) continue;
-    const dlt=(typeof b.delta_logit==="number")?b.delta_logit:0;
-    const se=(typeof b.se==="number")?b.se:0;
-    delta += ww*dlt; var_sum += (ww*ww)*(se*se); wsum += ww;
-  }
-  if (wsum<=0) return {delta:0,se:0};
-  return {delta, se:Math.sqrt(var_sum)};
-}
-
-function ciScale(band){
-  if (band===80) return 1.0;
-  if (band===68) return 0.68/0.80;
-  if (band===90) return 0.90/0.80;
-  return 1.0;
-}
-
-function lookupAttempt(env, sBin, tBin, yBin, dist){
-  return attemptIndex.get(`${env}|${sBin}|${tBin}|${yBin}|${dist}`) || null;
-}
-
-function recompute(){
-  if (!GRID || !ATTEMPT || !SENS) return;
-
-  const d = clamp(parseInt(distance.value,10), 18, 68); uiDist.value = d;
-  const env  = envSel.value;
-  const temp = parseFloat(tempInp.value);
-  const wind = parseFloat(windInp.value) || 0;
-  const band = parseInt(bandSel.value,10);
-
-  // Base league make (no kicker)
-  const base = interpBilinearLogit(env, temp, wind, d);
-  if (!base){ resultEl.textContent="No data"; detailsEl.textContent=""; kmetaEl.textContent=""; drawChart(env,temp,wind,d); return; }
-  let pMakeLeague = base.baseMean; // before kicker
-  let pMean = base.mean, pLo = base.lo, pHi = base.hi;
-
-  // Kicker adjust in logit space
-  const kid = kickerSel.value;
-  let kmeta = "", delta=0, se=0;
-  if (kid){
-    const krec = KMAP.get(kid);
-    const ks = kickerShiftForDistance(krec, d);
-    delta = ks.delta; se = ks.se||0;
-    pMean = sigmoid(logit(pMean) + delta);
-    pLo   = sigmoid(logit(pLo)   + delta);
-    pHi   = sigmoid(logit(pHi)   + delta);
-    if (se>0){ pLo = sigmoid(logit(pLo)-se); pHi = sigmoid(logit(pHi)+se); }
-    const bands = Object.keys(krec?.bands||{}).join(", ");
-    kmeta = `Kicker: ${krec?.kicker_name || kid} · effAtt=${(krec?.attempts_eff||0).toFixed(1)} · bands=[${bands}] · Δlogit(d)=${delta.toFixed(3)}`;
-  }
-  kmetaEl.textContent = kmeta;
-
-  // Rescale CI to selected band
-  const lmean = logit(pMean), scale = ciScale(band);
-  let llo = logit(pLo), lhi = logit(pHi), half=(lhi-llo)/2;
-  llo = lmean - half*scale; lhi = lmean + half*scale;
-  pLo = sigmoid(llo); pHi = sigmoid(lhi);
-
-  // Attempt base (league context)
-  const sBin = scoreBin.value, tBin = timeBin.value, yBin = ytgBin.value;
-  const rA = lookupAttempt(env, sBin, tBin, yBin, d);
-  const pAttemptBase = rA ? rA.prob_attempt_mean : 0.0;
-  const pAttemptBase_lo = rA ? rA.prob_attempt_p10 : 0.0;
-  const pAttemptBase_hi = rA ? rA.prob_attempt_p90 : 0.0;
-
-  // Attempt adjusted by kicker advantage (coupling)
-  const A=SENS.A, B=SENS.B, C=SENS.C;
-  const lA = A + C*logit(pAttemptBase) + B*(logit(pMean) - logit(pMakeLeague));
-  const pAttemptAdj = sigmoid(lA);
-
-  // Overall chance to get 3 points
-  const pOverall = pAttemptAdj * pMean;
-
-  resultEl.innerHTML = `
-    <div><strong>Make | Attempt</strong>: ${pct(pMean)} <span class="muted">(CI ${band}%: ${pct(pLo)}–${pct(pHi)})</span></div>
-    <div><strong>Attempt % (base)</strong>: ${pct(pAttemptBase)} <span class="muted">(p10–p90: ${pct(pAttemptBase_lo)}–${pct(pAttemptBase_hi)})</span></div>
-    <div><strong>Attempt % (kicker-adjusted)</strong>: ${pct(pAttemptAdj)}</div>
-    <div><strong>Overall Make %</strong>: ${pct(pOverall)}</div>
-  `;
-
-  const wShow = env==='indoor'?0:wind;
-  detailsEl.textContent = `Inputs: ${d} yd, ${env}, ${Math.round(temp)}°F, wind ${Math.round(wShow)} mph · Score=${sBin}, Time=${tBin}, YTG=${yBin} · ${base.mode}`;
-
-  drawChart(env, temp, wind, d);
-}
-
-function drawChart(env, temp, wind, dSel){
-  const W=800,H=220,PAD=34;
-  const xs=[], meanYs=[], loYs=[], hiYs=[];
-  for(let d=18; d<=68; d++){
-    const r = interpBilinearLogit(env, temp, wind, d);
-    if(!r) continue;
-    xs.push(d); meanYs.push(r.mean); loYs.push(r.lo); hiYs.push(r.hi);
-  }
-  const kid = kickerSel.value;
-  if (kid){
-    const krec = KMAP.get(kid);
-    for(let i=0;i<xs.length;i++){
-      const ks = kickerShiftForDistance(krec, xs[i]);
-      meanYs[i] = sigmoid(logit(meanYs[i]) + ks.delta);
-      loYs[i]   = sigmoid(logit(loYs[i])   + ks.delta - (ks.se||0));
-      hiYs[i]   = sigmoid(logit(hiYs[i])   + ks.delta + (ks.se||0));
-    }
-  }
-
-  const xmin=18,xmax=68,ymin=0,ymax=1;
-  const sx=x=>PAD+(x-xmin)/(xmax-xmin)*(W-2*PAD);
-  const sy=y=>H-PAD-(y-ymin)/(ymax-ymin)*(H-2*PAD);
-  const path=(xs,ys)=>xs.map((x,i)=>`${i?'L':'M'} ${sx(x).toFixed(1)} ${sy(ys[i]).toFixed(1)}`).join(' ');
-  const meanPath=path(xs,meanYs), loPath=path(xs,loYs), hiPath=path(xs,hiYs);
-  const bandPath = meanYs.length?(()=>{
-    const up=xs.map((x,i)=>`${i?'L':'M'} ${sx(x).toFixed(1)} ${sy(hiYs[i]).toFixed(1)}`).join(' ');
-    const dn=xs.slice().reverse().map((x,i)=>`L ${sx(x).toFixed(1)} ${sy(loYs[loYs.length-1-i]).toFixed(1)}`).join(' ');
-    return `${up} ${dn} Z`;
-  })() : "";
-  const xd = sx(dSel);
-
-  chartEl.innerHTML = `
-    <rect x="0" y="0" width="${W}" height="${H}" fill="#0f141b"/>
-    <g stroke="#1f2a38" stroke-width="1" opacity="0.8">
-      ${[0.2,0.4,0.6,0.8].map(p=>`<line x1="${PAD}" x2="${W-PAD}" y1="${sy(p)}" y2="${sy(p)}"></line>`).join('')}
-    </g>
-    <path d="${bandPath}" fill="#3da9fc22" stroke="none"></path>
-    <path d="${meanPath}" fill="none" stroke="#3da9fc" stroke-width="2"></path>
-    <path d="${loPath}"   fill="none" stroke="#3da9fc55" stroke-width="1"></path>
-    <path d="${hiPath}"   fill="none" stroke="#3da9fc55" stroke-width="1"></path>
-    <line x1="${xd}" x2="${xd}" y1="${PAD}" y2="${H-PAD}" stroke="#ffcc66" stroke-width="2" stroke-dasharray="4 4"></line>
-  `;
-}
-
-// ---- loading with serverless fallback ----
-async function tryFetch(url){ const r=await fetch(url); if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }
-function readFileAsJSON(input){ return new Promise((res,rej)=>{ if(!input.files||!input.files[0]) return rej(new Error("No file"));
-  const fr=new FileReader(); fr.onload=()=>{ try{res(JSON.parse(fr.result))}catch(e){rej(e)} }; fr.onerror=()=>rej(fr.error); fr.readAsText(input.files[0]); }); }
-
-async function boot(){
-  try{
-    loadMsgEl.textContent = "Loading JSONs via fetch…";
-    GRID    = await tryFetch("./fg_prob_grid_distance_env_temp_wind.json");
-    KICKERS = await tryFetch("./kicker_deltas_logit_banded.json");
-    ATTEMPT = await tryFetch("./fg_attempt_grid_distance_env_context.json");
-    SENS    = await tryFetch("./attempt_sensitivity.json");
-    loadMsgEl.textContent = "Loaded via fetch.";
-    afterLoad();
-  }catch(e){
-    console.warn("Fetch failed:", e);
-    loadMsgEl.innerHTML = `<span class="warn">Fetch failed (likely file:// CORS). Upload the four JSONs below or run a local server.</span>`;
-    document.getElementById('fallbackUpload').style.display = "flex";
-    btnUseUploads.onclick = async ()=>{
-      try{
-        GRID    = await readFileAsJSON(fileGrid);
-        KICKERS = await readFileAsJSON(fileKickers);
-        ATTEMPT = await readFileAsJSON(fileAttempt);
-        SENS    = await readFileAsJSON(fileSens);
-        loadMsgEl.textContent = "Loaded via file uploads.";
-        document.getElementById('fallbackUpload').style.display = "none";
-        afterLoad();
-      }catch(err){
-        loadMsgEl.innerHTML = `<span class="warn">Upload parse error: ${err.message}</span>`;
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FG Pro UI v4 — Part 1/6 (Shell)</title>
+  <!-- Tailwind CDN (no build step) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    /* Tailwind design tokens */
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50:  '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              300: '#93c5fd',
+              400: '#60a5fa',
+              500: '#3b82f6', // primary
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a'
+            },
+            ink: {
+              50:'#f8fafc',100:'#f1f5f9',200:'#e2e8f0',300:'#cbd5e1',400:'#94a3b8',500:'#64748b',
+              600:'#475569',700:'#334155',800:'#1f2937',900:'#0f172a'
+            },
+          },
+          boxShadow: {
+            soft: '0 1px 2px rgba(0,0,0,0.06), 0 1px 1px rgba(0,0,0,0.04)'
+          }
+        }
       }
     };
+  </script>
+  <style>
+    /* Define color variables (ensure your body classes reference these) */
+    :root {
+      --card: #ffffff;
+      --card-border: #e5e7eb;
+      /* NOTE: You need to define the 'brand' and 'ink' colors used by the Tailwind classes
+         (e.g., brand-600, ink-700) for the color properties below to work correctly.
+         I am using placeholders for these custom colors. */
+      --brand-600: #1d4ed8; /* Placeholder for a blue color */
+      --brand-700: #1e40af; /* Placeholder for a darker blue */
+      --brand-50: #eff6ff;  /* Placeholder for a light blue */
+      --brand-200: #bfdbfe; /* Placeholder for a medium blue */
+      --ink-700: #374151;  /* Placeholder for a dark gray text */
+      --ink-100: #f3f4f6;  /* Placeholder for a light gray hover */
+      --ink-600: #4b5563;  /* Placeholder for a muted gray label */
+      --ink-200: #e5e7eb;  /* Placeholder for a border gray */
+      --ink-900: #111827;  /* Placeholder for body text */
+      --ink-50: #f9fafb;   /* Placeholder for body background */
+    }
+
+    /* Simple utility aliases (mini design system) */
+    body { color: var(--ink-900); background-color: var(--ink-50); }
+
+    .card { 
+      background: var(--card); 
+      border: 1px solid var(--card-border); 
+      border-radius: 0.75rem; 
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04); 
+    } 
+    .card-pad { padding: 1rem; }
+
+    .btn { 
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-radius: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      /* transition and active:scale-[] properties are complex to emulate purely in CSS */
+      transition: all 0.1s ease;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); 
+    }
+
+    .btn-primary { 
+      background-color: var(--brand-600); 
+      color: white; 
+    }
+    .btn-primary:hover { 
+      background-color: var(--brand-700); 
+    }
+
+    .btn-ghost { 
+      color: var(--ink-700); 
+    }
+    .btn-ghost:hover { 
+      background-color: var(--ink-100); 
+    }
+
+    .seg { 
+      display: inline-flex; 
+      border-radius: 0.75rem; 
+      border: 1px solid var(--ink-200); 
+      overflow: hidden; 
+    }
+    .seg button { 
+      padding: 0.375rem 0.75rem; 
+      font-size: 0.875rem; 
+    }
+    .seg .on { 
+      background-color: var(--brand-50); 
+      color: var(--brand-700); 
+      border: 1px solid var(--brand-200); 
+    }
+    .seg .off { 
+      color: var(--ink-700); 
+    }
+    .seg .off:hover { 
+      background-color: var(--ink-100); 
+    }
+
+    .pill { 
+      display: inline-flex; 
+      align-items: center; 
+      gap: 0.5rem; 
+      border-radius: 9999px; /* full */
+      padding: 0.25rem 0.75rem; 
+      font-size: 0.75rem; /* xs */
+      font-weight: 500; 
+      border: 1px solid var(--ink-200); 
+      background-color: white; 
+    }
+
+    .label { 
+      font-size: 0.75rem; 
+      font-weight: 600; 
+      letter-spacing: 0.05em; /* tracking-wide */
+      color: var(--ink-600); 
+    }
+
+    .input { 
+      width: 100%; 
+      border-radius: 0.5rem; 
+      border: 1px solid var(--ink-200); 
+      background-color: white; 
+      padding: 0.5rem 0.75rem; 
+      font-size: 0.875rem; 
+      outline: none; 
+      /* focus:ring-2 focus:ring-brand-300 is complex; use a simple focus border: */
+    }
+    .input:focus {
+      border-color: var(--brand-600);
+    }
+    
+    .tab-btn { 
+      padding: 0.5rem 1rem; 
+      font-size: 0.875rem; 
+      font-weight: 500; 
+      border-radius: 0.5rem; 
+    }
+    .tab-btn:hover { 
+      background-color: var(--ink-100); 
+    }
+    
+    .tab-btn[aria-selected="true"] { 
+      background-color: var(--brand-600); 
+      color: white; 
+    }
+    .tab-btn[aria-selected="true"]:hover { 
+      background-color: var(--brand-600); 
+    }
+</style>
+</head>
+<body class="min-h-screen bg-ink-50 text-ink-900">
+    <header class="sticky top-0 z-40 bg-white border-b border-ink-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-3">
+        <div class="flex items-center gap-2">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-white font-bold">FG</span>
+          <h1 class="text-base sm:text-lg font-semibold">FG Pro UI v4</h1>
+        </div>
+
+        <div class="flex-1"></div>
+
+      <!-- Team / Kicker selectors -->
+      <div class="flex items-center gap-3">
+        <div class="hidden sm:flex flex-col">
+          <label for="teamSelect" class="label">Team</label>
+          <select id="teamSelect" class="input min-w-[9rem]" aria-label="Select Team">
+            <option value="">— select —</option>
+          </select>
+        </div>
+        <div class="hidden sm:flex flex-col">
+          <label for="kickerSelect" class="label">Kicker <span class="text-ink-400">(starter in parentheses)</span></label>
+          <select id="kickerSelect" class="input min-w-[12rem]" aria-label="Select Kicker" disabled>
+            <option value="">— select team first —</option>
+          </select>
+        </div>
+        <!-- Environment quick toggles -->
+        <div class="hidden lg:flex flex-col">
+          <span class="label">Environment</span>
+          <div class="seg" role="tablist" aria-label="Environment">
+            <button id="envIndoor" class="on" data-env="indoor" aria-pressed="true">Indoor</button>
+            <button id="envOutdoor" class="off" data-env="outdoor" aria-pressed="false">Outdoor</button>
+          </div>
+        </div>
+        <div class="hidden lg:flex flex-col">
+          <span class="label">Altitude</span>
+          <div class="seg" role="tablist" aria-label="Altitude">
+            <button class="on" data-alt="sea">Sea</button>
+            <button class="off" data-alt="mid">Mid</button>
+            <button class="off" data-alt="high">High</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main layout -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
+    <!-- Left controls -->
+    <aside class="lg:col-span-4 space-y-4">
+      <!-- Query controls -->
+      <section class="card card-pad">
+        <h2 class="text-sm font-semibold mb-3">Scenario</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="label" for="distance">Distance (yd)</label>
+            <input id="distance" type="range" min="18" max="68" value="45" class="w-full" />
+            <div class="text-xs text-ink-600 mt-1"><span id="distanceVal">45</span> yds</div>
+          </div>
+          <div>
+            <label class="label" for="temp">Temp (°F)</label>
+            <input id="temp" type="range" min="0" max="110" value="60" class="w-full" />
+            <div class="text-xs text-ink-600 mt-1"><span id="tempVal">60</span> °F</div>
+          </div>
+          <div>
+            <label class="label" for="wind">Wind (mph)</label>
+            <input id="wind" type="range" min="0" max="25" value="5" class="w-full" />
+            <div class="text-xs text-ink-600 mt-1"><span id="windVal">5</span> mph</div>
+          </div>
+          <div class="flex items-end gap-2">
+            <button class="btn btn-ghost" id="resetBtn">Reset</button>
+            <button class="btn btn-primary" id="applyBtn">Apply</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Context controls (Attempt model) -->
+      <section class="card card-pad">
+        <h2 class="text-sm font-semibold mb-3">Context</h2>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="label" for="scoreBin">Score</label>
+            <select id="scoreBin" class="input">
+              <option value="trail">Trail</option>
+              <option value="close" selected>Close</option>
+              <option value="lead">Lead</option>
+            </select>
+          </div>
+          <div>
+            <label class="label" for="timeBin">Time in Half</label>
+            <select id="timeBin" class="input">
+              <option value="early">Early</option>
+              <option value="mid" selected>Mid</option>
+              <option value="late">Late</option>
+            </select>
+          </div>
+          <div>
+            <label class="label" for="ytgBin">Yards to Gain</label>
+            <select id="ytgBin" class="input">
+              <option value="short">Short</option>
+              <option value="med" selected>Medium</option>
+              <option value="long">Long</option>
+            </select>
+          </div>
+          <div class="flex items-end">
+            <span class="pill">4th Down</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Notes/help -->
+      <section class="card card-pad">
+        <h2 class="text-sm font-semibold mb-2">Notes</h2>
+        <ul class="text-sm list-disc ml-5 space-y-1 text-ink-700">
+          <li>Starter kicker appears in parentheses once depth charts load.</li>
+          <li>Charts render after data loads (grid JSONs).</li>
+          <li>This is the <strong>shell</strong>: logic hooks are stubbed and ready.</li>
+        </ul>
+      </section>
+    </aside>
+
+    <!-- Right content -->
+    <section class="lg:col-span-8 space-y-3">
+      <!-- Tabs -->
+      <div class="flex items-center gap-2">
+        <button class="tab-btn" role="tab" aria-selected="true" data-tab="makeTab">Make%</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="attemptTab">Attempt%</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="decisionTab">Decision Edge</button>
+      </div>
+
+      <!-- Panels -->
+      <div class="card card-pad" id="makeTab" role="tabpanel">
+        <div id="makeChart" class="h-[380px] w-full bg-ink-100/60 rounded-lg border border-ink-200 flex items-center justify-center text-ink-500">
+          <span class="text-sm">Make% chart stub</span>
+        </div>
+      </div>
+
+      <div class="card card-pad hidden" id="attemptTab" role="tabpanel">
+        <div id="attemptChart" class="h-[380px] w-full bg-ink-100/60 rounded-lg border border-ink-200 flex items-center justify-center text-ink-500">
+          <span class="text-sm">Attempt% chart stub</span>
+        </div>
+      </div>
+
+      <div class="card card-pad hidden" id="decisionTab" role="tabpanel">
+        <div id="decisionChart" class="h-[380px] w-full bg-ink-100/60 rounded-lg border border-ink-200 flex items-center justify-center text-ink-500">
+          <span class="text-sm">Decision Edge chart stub</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Sticky footer status bar -->
+  <footer class="sticky bottom-0 z-40 border-t border-ink-200 bg-white/90 backdrop-blur">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-xs text-ink-600 flex items-center gap-3">
+      <div class="flex items-center gap-2">
+        <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+        <span id="statusText">Ready</span>
+      </div>
+      <div class="flex-1"></div>
+      <div class="hidden sm:flex items-center gap-3">
+        <span class="pill">Data: <span id="dataVersion" class="ml-1 font-semibold">—</span></span>
+        <span class="pill">Schema: <span id="schemaVersion" class="ml-1 font-semibold">—</span></span>
+        <span class="pill">UI: v4 shell</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Vanilla JS: lightweight state + stubs -->
+  <script>
+    const state = {
+      team: '',
+      kicker: '',
+      env: 'indoor',
+      alt: 'sea',
+      distance: 45,
+      tempF: 60,
+      wind: 5,
+      scoreBin: 'close',
+      timeBin: 'mid',
+      ytgBin: 'med',
+      // versions (populated when JSONs load)
+      versions: { data: '—', schema: '—' }
+    };
+
+    // --- Element refs
+    const teamSelect   = document.getElementById('teamSelect');
+    const kickerSelect = document.getElementById('kickerSelect');
+    const envIndoorBtn = document.getElementById('envIndoor');
+    const envOutdoorBtn= document.getElementById('envOutdoor');
+
+    const distance = document.getElementById('distance');
+    const temp     = document.getElementById('temp');
+    const wind     = document.getElementById('wind');
+    const distanceVal = document.getElementById('distanceVal');
+    const tempVal     = document.getElementById('tempVal');
+    const windVal     = document.getElementById('windVal');
+
+    const scoreBin = document.getElementById('scoreBin');
+    const timeBin  = document.getElementById('timeBin');
+    const ytgBin   = document.getElementById('ytgBin');
+
+    const statusText    = document.getElementById('statusText');
+    const dataVersionEl = document.getElementById('dataVersion');
+    const schemaVersionEl = document.getElementById('schemaVersion');
+
+    // --- Placeholder data loaders (wired in later parts)
+    async function loadRoster(){
+      // Expect ./nfl_kicker_roster.json (written by pipeline) — graceful fallback
+      try{
+        const res = await fetch('./nfl_kicker_roster.json', {cache:'no-store'});
+        if(!res.ok) throw new Error('not found');
+        return await res.json();
+      }catch(e){
+        console.warn('Roster not found yet. Using minimal sample.');
+        return [
+          { team:'BAL', kickers:[{id:'k1', name:'Justin Tucker', starter:true},{id:'k2', name:'Practice K', starter:false}]},
+          { team:'KC',  kickers:[{id:'k3', name:'Harrison Butker', starter:true}]}
+        ];
+      }
+    }
+
+    function populateTeamAndKicker(roster){
+      // Teams
+      const teams = roster.map(r=>r.team);
+      for(const t of teams){
+        const opt = document.createElement('option');
+        opt.value = t; opt.textContent = t; teamSelect.appendChild(opt);
+      }
+      // Team change → fill kicker list, show starter in parentheses in the label
+      teamSelect.addEventListener('change', () => {
+        state.team = teamSelect.value;
+        // wipe kickers
+        kickerSelect.innerHTML = '';
+        const entry = roster.find(r=>r.team===state.team);
+        if(!entry){ kickerSelect.disabled = true; return; }
+        kickerSelect.disabled = false;
+        const starter = entry.kickers.find(k=>k.starter);
+        // Build options
+        for(const k of entry.kickers){
+          const opt = document.createElement('option');
+          opt.value = k.id;
+          opt.textContent = k.name + (starter && k.id===starter.id ? ' (starter)' : '');
+          kickerSelect.appendChild(opt);
+        }
+        kickerSelect.value = starter ? starter.id : entry.kickers[0]?.id || '';
+        state.kicker = kickerSelect.value;
+      });
+      kickerSelect.addEventListener('change', ()=>{ state.kicker = kickerSelect.value; });
+    }
+
+    // --- Environment segmented control
+    function setEnv(which){
+      state.env = which;
+      envIndoorBtn.classList.toggle('on', which==='indoor');
+      envIndoorBtn.classList.toggle('off', which!=='indoor');
+      envIndoorBtn.setAttribute('aria-pressed', String(which==='indoor'));
+      envOutdoorBtn.classList.toggle('on', which==='outdoor');
+      envOutdoorBtn.classList.toggle('off', which!=='outdoor');
+      envOutdoorBtn.setAttribute('aria-pressed', String(which==='outdoor'));
+    }
+    envIndoorBtn.addEventListener('click', ()=>setEnv('indoor'));
+    envOutdoorBtn.addEventListener('click', ()=>setEnv('outdoor'));
+
+    // --- Sliders → labels
+    const sync = () => {
+      distanceVal.textContent = state.distance = +distance.value;
+      tempVal.textContent = state.tempF = +temp.value;
+      windVal.textContent = state.wind = +wind.value;
+    };
+    [distance,temp,wind].forEach(el=>el.addEventListener('input', sync));
+    sync();
+
+    // --- Context selects
+    scoreBin.addEventListener('change', ()=>state.scoreBin=scoreBin.value);
+    timeBin.addEventListener('change', ()=>state.timeBin=timeBin.value);
+    ytgBin.addEventListener('change', ()=>state.ytgBin=ytgBin.value);
+
+    // --- Tabs
+    const tabButtons = [...document.querySelectorAll('.tab-btn')];
+    const panels = {
+      makeTab: document.getElementById('makeTab'),
+      attemptTab: document.getElementById('attemptTab'),
+      decisionTab: document.getElementById('decisionTab')
+    };
+    function switchTab(id){
+      for(const btn of tabButtons){ btn.setAttribute('aria-selected', String(btn.dataset.tab===id)); }
+      for(const [pid, el] of Object.entries(panels)){
+        el.classList.toggle('hidden', pid!==id);
+      }
+    }
+    tabButtons.forEach(btn=>btn.addEventListener('click', ()=>switchTab(btn.dataset.tab)));
+
+    // --- Footer status helpers
+    function setStatus(msg){ statusText.textContent = msg; }
+    function setVersions(dataV, schemaV){
+      state.versions.data = dataV; state.versions.schema = schemaV;
+      dataVersionEl.textContent = dataV; schemaVersionEl.textContent = schemaV;
+    }
+
+    // --- Apply/Reset hooks (wire to models in later parts)
+    document.getElementById('applyBtn').addEventListener('click', ()=>{
+      setStatus('Applied scenario. (Charts will render when data loads in Parts 2–6)');
+    });
+    document.getElementById('resetBtn').addEventListener('click', ()=>{
+      distance.value = 45; temp.value = 60; wind.value = 5; sync(); setEnv('indoor');
+      scoreBin.value='close'; timeBin.value='mid'; ytgBin.value='med';
+      setStatus('Reset to defaults.');
+    });
+
+    // --- Bootstrap
+    (async function init(){
+      setEnv('indoor');
+      const roster = await loadRoster();
+      populateTeamAndKicker(roster);
+      // Versions (try to read manifest if present)
+      try{
+        const man = await fetch('./manifest.json', {cache:'no-store'}).then(r=>r.ok?r.json():null);
+        if(man){ setVersions(man.generated_at_epoch ? new Date(man.generated_at_epoch*1000).toISOString() : 'manifest', 'v4'); }
+        else { setVersions('local', 'v4'); }
+      }catch{ setVersions('local', 'v4'); }
+      setStatus('Ready');
+    })();
+  </script>
+
+  <!-- Paste this <script> block near the end of index.html, before the closing </body> -->
+<script>
+  /*
+    FG Pro UI v4 — Part 2/6 (Data Loader & Schema v2)
+    - Fetches required JSONs
+    - Detects schema_version (v1/v2) and adapts
+    - Exposes window.FG.DataStore with getters
+    - Non-blocking diagnostics toast if files are missing
+  
+    Usage example after init():
+      const ds = await FG.DataStore.init({ baseUrl: '.' });
+      const pMake = ds.getMakeProb({ env: 'outdoor', distance: 55, temp_F: 60, wind_mph: 8 });
+      const roster = ds.getRoster();
+  */
+  (function(){
+    // ------------------- Toast/diagnostics helpers -------------------
+    const Toast = {
+      ensureHost(){
+        let host = document.getElementById('fg_toasts');
+        if(!host){
+          host = document.createElement('div');
+          host.id = 'fg_toasts';
+          host.style.position = 'fixed';
+          host.style.right = '12px';
+          host.style.bottom = '12px';
+          host.style.zIndex = 9999;
+          host.style.display = 'flex';
+          host.style.flexDirection = 'column';
+          host.style.gap = '8px';
+          document.body.appendChild(host);
+        }
+        return host;
+      },
+      show(msg, type='info', timeout=4200){
+        const host = this.ensureHost();
+        const card = document.createElement('div');
+        card.setAttribute('role', 'status');
+        card.style.maxWidth = '360px';
+        card.style.padding = '10px 12px';
+        card.style.borderRadius = '12px';
+        card.style.border = '1px solid #e5e7eb';
+        card.style.background = type==='error' ? '#fff1f2' : type==='warn' ? '#fff7ed' : '#f8fafc';
+        card.style.boxShadow = '0 6px 16px rgba(0,0,0,.08)';
+        card.style.font = '12px/1.4 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto';
+        card.style.color = '#0f172a';
+        card.textContent = msg;
+        host.appendChild(card);
+        if(timeout>0){ setTimeout(()=> card.remove(), timeout); }
+        return card;
+      }
+    };
+    window.FG = window.FG || {};
+    window.FG.toast = (m,t,ms)=>Toast.show(m,t,ms);
+  
+    // ------------------- Fetch JSON utility -------------------
+    async function fetchJson(url){
+      try{
+        const res = await fetch(url, { cache: 'no-store' });
+        if(!res.ok) throw new Error(res.status+':'+res.statusText);
+        return await res.json();
+      }catch(err){
+        return { __missing: true, __error: String(err), __url: url };
+      }
+    }
+  
+    // ------------------- Schema helpers -------------------
+    function detectSchema(obj){
+      try{
+        const v = obj?.meta?.schema_version ?? obj?.schema_version;
+        if(typeof v === 'number') return v;
+        // Heuristics: v2 if new axes exist on any row
+        const row = Array.isArray(obj?.grid) && obj.grid[0] ? obj.grid[0] : null;
+        if(row && (('wind_head_mps' in row) || ('wind_cross_mps' in row) || ('altitude_m' in row) || ('air_density_ratio' in row) || ('hash' in row) || ('foot' in row))) return 2;
+      }catch(e){ /* noop */ }
+      return 1;
+    }
+    function roundTo(v, step){ return Math.round(+v/step)*step; }
+  
+    // ------------------- Normalizers -------------------
+    function normalizeMakeGrid(raw){
+      const schema = detectSchema(raw);
+      const grid = Array.isArray(raw?.grid) ? raw.grid : [];
+      const rows = grid.map(r=>({
+        distance: +r.distance,
+        env: (r.indoor_outdoor || r.env || 'indoor'),
+        temp_F: (r.temp_F ?? 60),
+        wind_mph: (r.wind_mph ?? (r.wind_head_mps!=null? Math.round(r.wind_head_mps/0.44704):0)),
+        wind_head_mps: (r.wind_head_mps ?? ((r.wind_mph!=null)? (r.wind_mph*0.44704):0)),
+        wind_cross_mps: (r.wind_cross_mps ?? 0),
+        altitude_m: (r.altitude_m ?? 0),
+        air_density_ratio: (r.air_density_ratio ?? 1),
+        prob_mean: +r.prob_mean
+      }));
+      // Index by env for quick lookup
+      const byEnv = { indoor: [], outdoor: [] };
+      for(const r of rows){ if(byEnv[r.env]) byEnv[r.env].push(r); }
+      return { schema, byEnv };
+    }
+  
+    function normalizeAttemptGrid(raw){
+      const schema = detectSchema(raw);
+      const grid = Array.isArray(raw?.grid) ? raw.grid : [];
+      const rows = grid.map(r=>({
+        distance: +r.distance,
+        env: (r.indoor_outdoor || r.env || 'indoor'),
+        score_bin: r.score_bin || 'close',
+        time_bin: r.time_bin || 'mid',
+        ytg_bin: r.ytg_bin || 'med',
+        hash: r.hash || null,  // v2 option
+        prob_attempt_mean: +r.prob_attempt_mean
+      }));
+      return { schema, rows };
+    }
+  
+    function normalizeKickerDeltas(rawBanded, rawByDist){
+      // prefer by-distance if present
+      if(rawByDist && !rawByDist.__missing && Array.isArray(rawByDist)){
+        const map = new Map();
+        for(const k of rawByDist){
+          const byD = k.by_distance || {};
+          const dist = {}; Object.keys(byD).forEach(d=>{ dist[+d] = byD[d]; });
+          map.set(String(k.kicker_id), { name: k.kicker_name, by_distance: dist });
+        }
+        return { kind: 'by_distance', map };
+      }
+      // fall back to banded
+      const list = Array.isArray(rawBanded) ? rawBanded : [];
+      const map = new Map();
+      for(const k of list){ map.set(String(k.kicker_id), k); }
+      return { kind: 'banded', map };
+    }
+  
+    function bandForDistance(d){
+      if(d<=39) return 'short';
+      if(d<=49) return 'mid';
+      if(d<=59) return 'long';
+      return 'xlong';
+    }
+  
+    // ------------------- DataStore -------------------
+    class DataStore {
+      static async init(opts){
+        const base = (opts?.baseUrl || '.').replace(/\/$/, '');
+        const files = {
+          make:  base + '/fg_prob_grid_distance_env_temp_wind.json',
+          attempt: base + '/fg_attempt_grid_distance_env_context.json',
+          deltasBanded: base + '/kicker_deltas_logit_banded.json',
+          deltasByDist: base + '/kicker_deltas_by_distance.json',
+          sens:  base + '/attempt_sensitivity.json',
+          roster: base + '/nfl_kicker_roster.json',
+          manifest: base + '/manifest.json'
+        };
+  
+        const [makeJ, attemptJ, bandedJ, byDistJ, sensJ, rosterJ, manifestJ] = await Promise.all([
+          fetchJson(files.make), fetchJson(files.attempt), fetchJson(files.deltasBanded), fetchJson(files.deltasByDist),
+          fetchJson(files.sens), fetchJson(files.roster), fetchJson(files.manifest)
+        ]);
+  
+        const missing = Object.entries({ makeJ, attemptJ, sensJ }).filter(([,o])=>o.__missing);
+        if(missing.length){ Toast.show('Some model files are missing — UI will degrade gracefully. ('+missing.map(([k])=>k.replace('J','')).join(', ')+')','warn',6000); }
+        if(rosterJ.__missing){ Toast.show('Roster not found — team/kicker select limited.','warn',4600); }
+  
+        // normalize
+        const make = !makeJ.__missing ? normalizeMakeGrid(makeJ) : { schema:1, byEnv:{indoor:[],outdoor:[]} };
+        const attempt = !attemptJ.__missing ? normalizeAttemptGrid(attemptJ) : { schema:1, rows:[] };
+        const deltas = normalizeKickerDeltas(bandedJ.__missing?[]:bandedJ, byDistJ.__missing?null:byDistJ);
+        const sens = (!sensJ.__missing && sensJ.A!=null && sensJ.B!=null && sensJ.C!=null) ? sensJ : {A:0,B:0,C:1};
+        const roster = Array.isArray(rosterJ) ? rosterJ : [];
+        const manifest = manifestJ.__missing ? null : manifestJ;
+  
+        const ds = new DataStore(base, files, make, attempt, deltas, sens, roster, manifest);
+        window.FG.DataStore = ds; // expose singleton instance
+        return ds;
+      }
+  
+      constructor(base, files, make, attempt, deltas, sens, roster, manifest){
+        this.base = base; this.files = files; this._make = make; this._attempt = attempt;
+        this._deltas = deltas; this._sens = sens; this._roster = roster; this._manifest = manifest;
+        // Build simple indexes for performance
+        this._makeIdx = { indoor: new Map(), outdoor: new Map() };
+        for(const env of ['indoor','outdoor']){
+          for(const r of (make.byEnv[env]||[])){
+            const key = this._mkKey(env, r.distance, r.temp_F, r.wind_mph, r.wind_head_mps, r.wind_cross_mps, r.altitude_m);
+            this._makeIdx[env].set(key, r);
+          }
+        }
+        this._attemptIdx = new Map();
+        for(const r of attempt.rows){
+          const key = this._atKey(r.env, r.distance, r.score_bin, r.time_bin, r.ytg_bin, r.hash);
+          this._attemptIdx.set(key, r);
+        }
+        // Roster quick maps
+        this._teams = this._roster.map(r=>r.team);
+        this._kickersByTeam = new Map(this._roster.map(r=>[r.team, r.kickers || []]));
+      }
+  
+      // ----------- keys -----------
+      _mkKey(env, d, tF, wMph, wHead, wCross, alt){
+        const dR = Math.round(+d);
+        const tR = Math.round(+tF/5)*5;     // 5°F grid typical
+        const wR = Math.round(+wMph/2)*2;   // 2 mph grid typical
+        const hR = Math.round((+wHead||0)*1000)/1000;
+        const cR = Math.round((+wCross||0)*1000)/1000;
+        const aR = Math.round((+alt||0)/50)*50; // 50m buckets
+        return [env,dR,tR,wR,hR,cR,aR].join('|');
+      }
+      _atKey(env, d, s, t, y, h){
+        const dR = Math.round(+d);
+        return [env,dR,s,t,y,h||''].join('|');
+      }
+  
+      // ----------- getters -----------
+      getVersions(){
+        const dataV = this._manifest?.generated_at_epoch ? new Date(this._manifest.generated_at_epoch*1000).toISOString() : 'local';
+        const schemaV = 'make:v'+this._make.schema+' attempt:v'+this._attempt.schema;
+        return { data: dataV, schema: schemaV };
+      }
+      getRoster(){ return this._roster; }
+      getTeams(){ return this._teams.slice(); }
+      getKickers(team){ return this._kickersByTeam.get(team)||[]; }
+  
+      // League make probability (no kicker deltas applied)
+      getMakeProb({ env='indoor', distance, temp_F=60, wind_mph=0, wind_head_mps=null, wind_cross_mps=null, altitude_m=0 }){
+        const key = this._mkKey(env, distance, temp_F, wind_mph, wind_head_mps, wind_cross_mps, altitude_m);
+        let row = this._makeIdx[env].get(key);
+        if(!row){
+          // fallback path: nearest by env+distance only
+          const pool = this._make.byEnv[env]||[];
+          let best=null, bd=1e9;
+          for(const r of pool){ const d = Math.abs(r.distance - distance); if(d<bd){ bd=d; best=r; } }
+          row = best;
+        }
+        return row ? +row.prob_mean : 0.5;
+      }
+  
+      // Attempt propensity (league baseline)
+      getAttemptProb({ env='indoor', distance, score_bin='close', time_bin='mid', ytg_bin='med', hash=null }){
+        const key = this._atKey(env, distance, score_bin, time_bin, ytg_bin, hash);
+        let row = this._attemptIdx.get(key);
+        if(!row){
+          // distance-only fallback
+          let best=null, bd=1e9;
+          for(const [k,r] of this._attemptIdx){
+            const parts=k.split('|'); if(parts[0]!==env) continue;
+            const di=+parts[1]; const d=Math.abs(di-distance); if(d<bd){ bd=d; best=r; }
+          }
+          row=best;
+        }
+        return row ? +row.prob_attempt_mean : 0.25;
+      }
+  
+      // Kicker delta on logit scale
+      getKickerDeltaLogit(kickerId, distance){
+        const kid = String(kickerId||'');
+        if(!kid) return { delta_logit: 0, se: 0 };
+        if(this._deltas.kind==='by_distance'){
+          const obj = this._deltas.map.get(kid);
+          if(!obj) return { delta_logit: 0, se: 0 };
+          const byD = obj.by_distance || {};
+          const d = Math.round(distance);
+          const hit = byD[d] || byD[d-1] || byD[d+1] || null;
+          return hit ? { delta_logit: +hit.delta_logit, se: +hit.se||0 } : { delta_logit: 0, se: 0 };
+        }
+        // banded with blend around thresholds
+        const entry = this._deltas.map.get(kid);
+        if(!entry) return { delta_logit: 0, se: 0 };
+        const band = bandForDistance(distance);
+        const bands = entry.bands || {};
+        const BLEND = 2; // yards
+        const bounds = { short:39, mid:49, long:59 };
+        function wts(d){
+          if(d <= bounds.short - BLEND) return {short:1};
+          if(d < bounds.short + BLEND){ const t=(d-(bounds.short-BLEND))/(2*BLEND); return {short:1-t, mid:t}; }
+          if(d <= bounds.mid - BLEND) return {mid:1};
+          if(d < bounds.mid + BLEND){ const t=(d-(bounds.mid-BLEND))/(2*BLEND); return {mid:1-t, long:t}; }
+          if(d <= bounds.long - BLEND) return {long:1};
+          if(d < bounds.long + BLEND){ const t=(d-(bounds.long-BLEND))/(2*BLEND); return {long:1-t, xlong:t}; }
+          return {xlong:1};
+        }
+        const w = wts(distance);
+        let dl=0, varSum=0; for(const [k,wt] of Object.entries(w)){
+          const b = bands[k]; if(!b) continue; const se = +b.se||0; dl += wt*(+b.delta_logit||0); varSum += wt*wt*se*se;
+        }
+        return { delta_logit: dl, se: Math.sqrt(varSum) };
+      }
+  
+      // Optional: coupled attempt given kicker delta and sensitivity
+      getCoupledAttemptProb({ env='indoor', distance, score_bin='close', time_bin='mid', ytg_bin='med', kickerId=null, temp_F=60, wind_mph=0, wind_head_mps=null, wind_cross_mps=null, altitude_m=0 }){
+        // Base attempt
+        const pA = this.getAttemptProb({ env, distance, score_bin, time_bin, ytg_bin });
+        // League make and kicker-adjusted make
+        const pM_league = this.getMakeProb({ env, distance, temp_F, wind_mph, wind_head_mps, wind_cross_mps, altitude_m });
+        const dK = this.getKickerDeltaLogit(kickerId, distance).delta_logit;
+        const pM_kicker = sigmoid(logit(pM_league) + dK);
+        // Sensitivity
+        const {A,B,C} = this._sens;
+        const lp = A + C*logit(pA) + B*(logit(pM_kicker) - logit(pM_league));
+        return sigmoid(lp);
+      }
+    }
+  
+    function logit(p){ p=Math.min(Math.max(p,1e-9),1-1e-9); return Math.log(p/(1-p)); }
+    function sigmoid(x){ return 1/(1+Math.exp(-x)); }
+  
+    // Expose class too (for testing), but keep singleton on FG.DataStore from init()
+    window.FG.DataStoreClass = DataStore;
+  })();
+  </script>
+
+  <!-- =========================
+FG Pro UI v4 — Part 3/6 (Selectors)
+Paste the HTML fragment into the LEFT RAIL (inside <main> -> <aside>), above the "Scenario" card.
+Paste the <script> block near the end of index.html, AFTER Part 2 (Data Loader) script.
+All IDs coexist with Part 1; this adds a left-rail selector and syncs with top-bar selects.
+========================= -->
+
+<!-- LEFT-RAIL: Team & Kicker selectors (place above Scenario card) -->
+<section class="card card-pad" id="teamKickerCard">
+  <h2 class="text-sm font-semibold mb-3">Team & Kicker</h2>
+  <div class="grid grid-cols-1 gap-3">
+    <div>
+      <label class="label" for="teamSelectLR">Team</label>
+      <select id="teamSelectLR" class="input" aria-label="Select Team (Left)">
+        <option value="">— select —</option>
+      </select>
+    </div>
+    <div>
+      <label class="label" for="kickerSelectLR">Kicker <span class="text-ink-400">(starter in parentheses)</span></label>
+      <select id="kickerSelectLR" class="input" aria-label="Select Kicker (Left)" disabled>
+        <option value="">— select team first —</option>
+      </select>
+      <p class="text-[11px] mt-1 text-ink-500">Inactive kickers are grayed out.</p>
+    </div>
+  </div>
+</section>
+
+<!-- OPTIONAL: Wind direction segmented (place under Context or Scenario if desired) -->
+<section class="card card-pad" id="windDirCard">
+  <h2 class="text-sm font-semibold mb-3">Wind Direction</h2>
+  <div class="seg" role="tablist" aria-label="Wind Direction">
+    <button class="on"   data-dir="calm"   aria-pressed="true">Calm</button>
+    <button class="off"  data-dir="head">Head</button>
+    <button class="off"  data-dir="tail">Tail</button>
+    <button class="off"  data-dir="crossL">Cross ⟵</button>
+    <button class="off"  data-dir="crossR">Cross ⟶</button>
+  </div>
+</section>
+
+<!-- =========================
+  SCRIPT: Wiring for selectors + slider paint + event emission
+========================= -->
+<script>
+(function(){
+  // Ensure FG namespace exists (from Part 2)
+  window.FG = window.FG || {};
+
+  // Grab existing global state from Part 1 or create one
+  const state = window.state || (window.state = {
+    team: '',
+    kicker: '',
+    env: 'indoor',
+    alt: 'sea',
+    distance: 45,
+    tempF: 60,
+    wind: 5,
+    windDir: 'calm',
+    scoreBin: 'close',
+    timeBin: 'mid',
+    ytgBin: 'med'
+  });
+
+  // Refs (top bar & left rail — keep them in sync)
+  const teamTop   = document.getElementById('teamSelect');
+  const kickerTop = document.getElementById('kickerSelect');
+  const teamLR    = document.getElementById('teamSelectLR');
+  const kickerLR  = document.getElementById('kickerSelectLR');
+
+  const envIndoorBtn = document.getElementById('envIndoor');
+  const envOutdoorBtn= document.getElementById('envOutdoor');
+
+  const distance = document.getElementById('distance');
+  const temp     = document.getElementById('temp');
+  const wind     = document.getElementById('wind');
+  const distanceVal = document.getElementById('distanceVal');
+  const tempVal     = document.getElementById('tempVal');
+  const windVal     = document.getElementById('windVal');
+
+  const windDirCard = document.getElementById('windDirCard');
+
+  const NFL_TEAMS = [
+    'ARI','ATL','BAL','BUF','CAR','CHI','CIN','CLE','DAL','DEN','DET','GB','HOU','IND','JAX','KC','LAC','LAR','MIA','MIN','NE','NO','NYG','NYJ','LV','PHI','PIT','SEA','SF','TB','TEN','WAS'
+  ];
+
+  function emitState(){
+    window.dispatchEvent(new CustomEvent('fg:stateChanged', { detail: { ...state } }));
   }
-}
-function afterLoad(){
-  buildMakeIndex();
-  buildAttemptIndex();
-  populateKickers();
-  onEnvChange();
-  recompute();
-}
-boot();
+
+  // ---------- Range track paint with danger zone (62–68 yd) ----------
+  function paintDistanceTrack(){
+    if(!distance) return;
+    const min=+distance.min||18, max=+distance.max||68, v=+distance.value;
+    const pct = (v-min)/(max-min)*100;
+    const dangerStart = ((62-min)/(max-min))*100; // ~88%
+    const grad = `linear-gradient(90deg, #3b82f6 0% ${pct}%, #e5e7eb ${pct}% ${dangerStart}%, #ef4444 ${dangerStart}% 100%)`;
+    distance.style.background = grad;
+  }
+  if(distance){ distance.addEventListener('input', paintDistanceTrack); paintDistanceTrack(); }
+
+  // ---------- Helpers ----------
+  function option(label, value, extra={}){
+    const o = document.createElement('option');
+    o.textContent = label; o.value = value;
+    if(extra.disabled){ o.disabled = true; o.textContent += ' (inactive)'; }
+    if(extra.selected){ o.selected = true; }
+    return o;
+  }
+
+  function syncSelectValues(){
+    if(teamTop) teamTop.value = state.team || '';
+    if(teamLR)  teamLR.value  = state.team || '';
+    if(kickerTop) kickerTop.value = state.kicker || '';
+    if(kickerLR)  kickerLR.value  = state.kicker || '';
+  }
+
+  function setEnv(which){
+    state.env = which;
+    envIndoorBtn?.classList.toggle('on', which==='indoor');
+    envIndoorBtn?.classList.toggle('off', which!=='indoor');
+    envIndoorBtn?.setAttribute('aria-pressed', String(which==='indoor'));
+    envOutdoorBtn?.classList.toggle('on', which==='outdoor');
+    envOutdoorBtn?.classList.toggle('off', which!=='outdoor');
+    envOutdoorBtn?.setAttribute('aria-pressed', String(which==='outdoor'));
+    emitState();
+  }
+
+  function bindWindDir(){
+    if(!windDirCard) return;
+    const btns = [...windDirCard.querySelectorAll('button[data-dir]')];
+    function set(which){
+      state.windDir = which;
+      for(const b of btns){
+        const on = b.dataset.dir===which; b.classList.toggle('on', on); b.classList.toggle('off', !on); b.setAttribute('aria-pressed', String(on));
+      }
+      emitState();
+    }
+    btns.forEach(b=> b.addEventListener('click', ()=> set(b.dataset.dir)));
+    set(state.windDir||'calm');
+  }
+
+  // ---------- Populate from DataStore ----------
+  async function initSelectors(){
+    // Ensure DataStore is ready
+    const ds = window.FG.DataStore || await window.FG.DataStoreClass?.init?.({ baseUrl: '.' }) || null;
+
+    // Teams
+    const teams = ds?.getTeams?.() || NFL_TEAMS;
+    if(teamTop){
+      teamTop.innerHTML = ''; teamTop.appendChild(option('— select —',''));
+      for(const t of teams){ teamTop.appendChild(option(t,t)); }
+    }
+    if(teamLR){
+      teamLR.innerHTML = ''; teamLR.appendChild(option('— select —',''));
+      for(const t of teams){ teamLR.appendChild(option(t,t)); }
+    }
+
+    // Team → kicker binding (both top and left)
+    function fillKickers(selectEl, team){
+      if(!selectEl) return;
+      selectEl.innerHTML='';
+      if(!team){ selectEl.disabled=true; selectEl.appendChild(option('— select team first —','')); return; }
+      const ks = ds?.getKickers?.(team) || [];
+      if(!ks.length){ selectEl.disabled=true; selectEl.appendChild(option('— no kickers —','')); return; }
+      selectEl.disabled=false;
+      const starter = ks.find(k=> !!k.starter);
+      for(const k of ks){
+        const isInactive = (k.active===false) || (String(k.status||'').toLowerCase()==='inactive');
+        const label = k.name + (starter && k.id===starter.id ? ' (starter)' : '');
+        selectEl.appendChild(option(label, String(k.id), { disabled: isInactive }));
+      }
+      selectEl.value = String((starter?.id) ?? ks[0].id);
+    }
+
+    function onTeamChange(newTeam){
+      state.team = newTeam || '';
+      fillKickers(kickerTop, state.team);
+      fillKickers(kickerLR,  state.team);
+      // auto-select starter on both
+      const pick = kickerLR && kickerLR.value ? kickerLR.value : (kickerTop?.value || '');
+      state.kicker = pick || '';
+      syncSelectValues();
+      emitState();
+    }
+
+    function onKickerChange(newKicker){
+      state.kicker = newKicker || '';
+      syncSelectValues();
+      emitState();
+    }
+
+    // Initial defaults — if roster has a team with a starter, pick first
+    const firstTeam = teams[0] || '';
+    onTeamChange(firstTeam);
+
+    // Bind changes (top and left)
+    teamTop   && teamTop.addEventListener('change', ()=> onTeamChange(teamTop.value));
+    teamLR    && teamLR.addEventListener('change', ()=> onTeamChange(teamLR.value));
+    kickerTop && kickerTop.addEventListener('change', ()=> onKickerChange(kickerTop.value));
+    kickerLR  && kickerLR.addEventListener('change', ()=> onKickerChange(kickerLR.value));
+
+    // Env + sliders
+    envIndoorBtn && envIndoorBtn.addEventListener('click', ()=> setEnv('indoor'));
+    envOutdoorBtn&& envOutdoorBtn.addEventListener('click', ()=> setEnv('outdoor'));
+
+    const syncSliders = ()=>{
+      state.distance = +distance.value; distanceVal && (distanceVal.textContent = state.distance);
+      state.tempF    = +temp.value;     tempVal     && (tempVal.textContent     = state.tempF);
+      state.wind     = +wind.value;     windVal     && (windVal.textContent     = state.wind);
+      paintDistanceTrack();
+      emitState();
+    };
+    distance && distance.addEventListener('input', syncSliders);
+    temp     && temp.addEventListener('input', syncSliders);
+    wind     && wind.addEventListener('input', syncSliders);
+
+    bindWindDir();
+
+    // Emit initial
+    emitState();
+  }
+
+  // Kick off after DOM is ready
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', initSelectors);
+  }else{ initSelectors(); }
+})();
 </script>
+
+<!-- =========================
+FG Pro UI v4 — Part 4/6 (Make% Chart)
+Paste this <script> block near the end of index.html, AFTER Parts 1–3.
+Requires FG.DataStore (Part 2) and global `state` (Part 1/3).
+Canvas-based; no external chart libs.
+========================= -->
+<script>
+  (function(){
+    const DMIN=18, DMAX=68;
+    const PX = (v)=>Math.max(0, Math.round(v));
+  
+    // Lightweight tooltip
+    function makeTooltip(host){
+      const tip = document.createElement('div');
+      tip.style.position='fixed'; tip.style.pointerEvents='none';
+      tip.style.padding='6px 8px'; tip.style.font='12px/1.3 ui-sans-serif,system-ui';
+      tip.style.background='rgba(17,24,39,.92)'; tip.style.color='#fff'; tip.style.borderRadius='8px';
+      tip.style.boxShadow='0 8px 24px rgba(0,0,0,.24)'; tip.style.zIndex=9998; tip.style.display='none';
+      host.appendChild(tip);
+      return {
+        show(x,y,html){ tip.innerHTML=html; tip.style.left=(x+14)+'px'; tip.style.top=(y+14)+'px'; tip.style.display='block'; },
+        hide(){ tip.style.display='none'; }
+      };
+    }
+  
+    function logit(p){ p=Math.min(Math.max(+p,1e-9),1-1e-9); return Math.log(p/(1-p)); }
+    function sigmoid(x){ return 1/(1+Math.exp(-x)); }
+  
+    class MakeChart {
+      constructor(container){
+        this.root = typeof container==='string' ? document.querySelector(container) : container;
+        this.canvas = document.createElement('canvas');
+        this.canvas.style.width='100%'; this.canvas.style.height='100%';
+        this.canvas.style.display='block';
+        this.overlay = document.createElement('canvas');
+        this.overlay.style.position='absolute'; this.overlay.style.left=0; this.overlay.style.top=0; this.overlay.style.width='100%'; this.overlay.style.height='100%'; this.overlay.style.pointerEvents='none';
+        this.host = document.createElement('div');
+        this.host.className='relative w-full h-full';
+        this.host.appendChild(this.canvas); this.host.appendChild(this.overlay);
+        this.root.innerHTML=''; this.root.appendChild(this.host);
+  
+        this.ctx = this.canvas.getContext('2d');
+        this.octx = this.overlay.getContext('2d');
+        this.tooltip = makeTooltip(document.body);
+  
+        this.ds = null; this.state = null; this.quantiles = null; // optional p10/p90 by distance
+  
+        this._ro = new ResizeObserver(()=> this.resize());
+        this._ro.observe(this.root);
+  
+        this._mouseCanvas = document.createElement('canvas');
+        this._mouseCanvas.style.position='absolute'; this._mouseCanvas.style.inset=0; this._mouseCanvas.style.background='transparent';
+        this._mouseCanvas.style.cursor='crosshair';
+        this.host.appendChild(this._mouseCanvas);
+        this._mouseCanvas.addEventListener('mousemove', (e)=> this.onHover(e));
+        this._mouseCanvas.addEventListener('mouseleave', ()=> this.tooltip.hide());
+      }
+  
+      async setDataStore(ds){
+        this.ds = ds || window.FG?.DataStore || await window.FG?.DataStoreClass?.init?.({ baseUrl: '.' });
+        this.resize();
+        await this._maybeLoadQuantiles();
+        this.render();
+      }
+      setState(state){ this.state = state; this.render(); }
+  
+      resize(){
+        const dpr = Math.min(2, window.devicePixelRatio||1);
+        const w = this.root.clientWidth||800; const h = this.root.clientHeight||360;
+        for(const c of [this.canvas, this.overlay, this._mouseCanvas]){
+          c.width = PX(w*dpr); c.height = PX(h*dpr); c.style.width=w+'px'; c.style.height=h+'px';
+          const ctx = c.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0);
+        }
+        this.render();
+      }
+  
+      // Try to read p10/p90 from the make grid file directly (optional)
+      async _maybeLoadQuantiles(){
+        try{
+          const res = await fetch('./fg_prob_grid_distance_env_temp_wind.json', { cache: 'no-store' });
+          if(!res.ok) return; const obj = await res.json();
+          const env = (this.state?.env)||'indoor';
+          // Use same rounding as DataStore (5F, 2mph)
+          const tF = Math.round((this.state?.tempF ?? 60)/5)*5;
+          const wM = Math.round((this.state?.wind ?? 0)/2)*2;
+          const rows = (obj?.grid||[]).filter(r=> (r.indoor_outdoor||r.env)==env && (+r.temp_F)==tF && (+r.wind_mph)==wM);
+          if(!rows.length) return;
+          this.quantiles = new Map();
+          for(const r of rows){
+            if(r.prob_p10!=null && r.prob_p90!=null){ this.quantiles.set(+r.distance, {p10:+r.prob_p10, p90:+r.prob_p90}); }
+          }
+        }catch{ /* optional */ }
+      }
+  
+      _calcSeries(){
+        const s = this.state || {};
+        const ds = this.ds; if(!ds) return null;
+        const env = s.env||'indoor';
+        const tF = s.tempF ?? 60; const wM = s.wind ?? 0;
+        const kid = s.kicker || null;
+  
+        const x = []; const league = []; const kicker = [];
+        const p10=[]; const p90=[]; // optional
+        for(let d=DMIN; d<=DMAX; d++){
+          x.push(d);
+          const pL = ds.getMakeProb({ env, distance:d, temp_F:tF, wind_mph:wM });
+          let dK = 0, se=0; const del = ds.getKickerDeltaLogit(kid, d) || {delta_logit:0,se:0};
+          dK = +del.delta_logit||0; se=+del.se||0;
+          // Shrink delta by its uncertainty (stable default)
+          const w = 1 / (1 + Math.pow(se/0.8, 2));
+          const pK = sigmoid(logit(pL) + dK * w);
+          league.push(pL); kicker.push(pK);
+          if(this.quantiles && this.quantiles.has(d)){
+            const q = this.quantiles.get(d); p10.push(q.p10); p90.push(q.p90);
+          } else { p10.push(null); p90.push(null); }
+        }
+        return { x, league, kicker, p10, p90 };
+      }
+  
+      onHover(evt){
+        const rect = this.canvas.getBoundingClientRect();
+        const x = evt.clientX - rect.left; const y = evt.clientY - rect.top;
+        const st = this._scales; if(!st) return;
+        const dApprox = Math.round(st.xi(x));
+        const d = Math.min(DMAX, Math.max(DMIN, dApprox));
+        const s = this._series; if(!s) return;
+        const idx = d-DMIN; const pL = s.league[idx]; const pK = s.kicker[idx];
+        const deltaPct = ((pK-pL)*100).toFixed(1);
+        const html = `<div><b>${d} yards</b></div>
+                      <div>League: ${(pL*100).toFixed(1)}%</div>
+                      <div>Kicker: ${(pK*100).toFixed(1)}% <span style="opacity:.7">(${deltaPct}% Δ)</span></div>`;
+        this.tooltip.show(evt.clientX, evt.clientY, html);
+        this._drawHover(d);
+      }
+  
+      _drawAxes(ctx, W, H, pad){
+        ctx.clearRect(0,0,W,H);
+        ctx.save();
+        ctx.translate(pad.l, pad.t); const w=W-pad.l-pad.r, h=H-pad.t-pad.b;
+  
+        // grid lines
+        ctx.strokeStyle='#e5e7eb'; ctx.lineWidth=1;
+        ctx.beginPath();
+        for(let gy=0; gy<=10; gy++){
+          const y = h - h*(gy/10); ctx.moveTo(0,y); ctx.lineTo(w,y);
+        }
+        for(let gx=0; gx<=5; gx++){
+          const x = w*(gx/5); ctx.moveTo(x,0); ctx.lineTo(x,h);
+        }
+        ctx.stroke();
+  
+        // axes labels
+        ctx.fillStyle='#334155'; ctx.font='12px ui-sans-serif,system-ui'; ctx.textAlign='right';
+        for(let gy=0; gy<=10; gy+=2){ const v=gy*10; const y=h - h*(gy/10); ctx.fillText(v+'%', -6, y+4); }
+        ctx.textAlign='center';
+        for(let d=20; d<=68; d+=8){ const x = w*( (d-DMIN)/(DMAX-DMIN) ); ctx.fillText(d+'y', x, h+18); }
+  
+        ctx.restore();
+      }
+  
+      _drawSeries(ctx, W, H, pad, series){
+        ctx.save(); ctx.translate(pad.l, pad.t); const w=W-pad.l-pad.r, h=H-pad.t-pad.b;
+  
+        const x = (d)=> w*( (d-DMIN)/(DMAX-DMIN) );
+        const y = (p)=> h*(1-p);
+        this._scales = { x, y, xi:(px)=> (px - pad.l)/(W-pad.l-pad.r)*(DMAX-DMIN)+DMIN };
+  
+        // 60+ shaded band
+        const x60 = x(60); ctx.fillStyle='rgba(239,68,68,.10)'; ctx.fillRect(x60, 0, w-x60, h);
+  
+        // p10-p90 band if available
+        if(series.p10.some(v=>v!=null) && series.p90.some(v=>v!=null)){
+          ctx.fillStyle='rgba(31,41,55,.10)';
+          ctx.beginPath();
+          // top (p90)
+          for(let d=DMIN; d<=DMAX; d++){
+            const i=d-DMIN; const px=x(d), py=y(series.p90[i]??series.league[i]);
+            if(d===DMIN) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+          }
+          // back along bottom (p10)
+          for(let d=DMAX; d>=DMIN; d--){
+            const i=d-DMIN; const px=x(d), py=y(series.p10[i]??series.league[i]);
+            ctx.lineTo(px,py);
+          }
+          ctx.closePath(); ctx.fill();
+        }
+  
+        // League curve
+        ctx.strokeStyle='#3b82f6'; ctx.lineWidth=2.25; ctx.beginPath();
+        for(let d=DMIN; d<=DMAX; d++){
+          const i=d-DMIN; const px=x(d), py=y(series.league[i]);
+          if(d===DMIN) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+        }
+        ctx.stroke();
+  
+        // Kicker curve
+        ctx.strokeStyle='#f59e0b'; ctx.lineWidth=2; ctx.beginPath();
+        for(let d=DMIN; d<=DMAX; d++){
+          const i=d-DMIN; const px=x(d), py=y(series.kicker[i]);
+          if(d===DMIN) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+        }
+        ctx.stroke();
+  
+        // Legend
+        ctx.fillStyle='#0f172a'; ctx.font='12px ui-sans-serif,system-ui';
+        function swatch(x0,y0,color,label){ ctx.fillStyle=color; ctx.fillRect(x0,y0,14,3); ctx.fillStyle='#0f172a'; ctx.fillText(label, x0+20, y0+4); }
+        swatch(8, 10, '#3b82f6', 'League make%');
+        swatch(8, 28, '#f59e0b', 'Kicker-adjusted');
+  
+        ctx.restore();
+      }
+  
+      _drawHover(d){
+        const W=this.overlay.width/(window.devicePixelRatio||1), H=this.overlay.height/(window.devicePixelRatio||1);
+        const pad={l:48,t:16,r:16,b:28}; const w=W-pad.l-pad.r, h=H-pad.t-pad.b;
+        const x = (dd)=> w*( (dd-DMIN)/(DMAX-DMIN) );
+        const y = (p)=> h*(1-p);
+        const i=d-DMIN; const s=this._series; if(!s) return;
+  
+        this.octx.setTransform(1,0,0,1,0,0); this.octx.clearRect(0,0,W,H); this.octx.setTransform(window.devicePixelRatio||1,0,0,window.devicePixelRatio||1,0,0);
+        this.octx.translate(pad.l,pad.t);
+        this.octx.strokeStyle='rgba(15,23,42,.25)'; this.octx.beginPath(); this.octx.moveTo(x(d),0); this.octx.lineTo(x(d),h); this.octx.stroke();
+        this.octx.fillStyle='#3b82f6'; this.octx.beginPath(); this.octx.arc(x(d), y(s.league[i]), 3.5, 0, Math.PI*2); this.octx.fill();
+        this.octx.fillStyle='#f59e0b'; this.octx.beginPath(); this.octx.arc(x(d), y(s.kicker[i]), 3.5, 0, Math.PI*2); this.octx.fill();
+      }
+  
+      render(){
+        if(!this.root || !this.ctx) return;
+        if(!this.ds || !this.state){
+          const ctx=this.ctx, W=this.canvas.width/(window.devicePixelRatio||1), H=this.canvas.height/(window.devicePixelRatio||1);
+          ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,W,H); ctx.font='12px ui-sans-serif,system-ui'; ctx.fillStyle='#64748b'; ctx.fillText('Loading data…', 12, 18); return;
+        }
+        this._series = this._calcSeries();
+        const series = this._series;
+        const W=this.canvas.width/(window.devicePixelRatio||1), H=this.canvas.height/(window.devicePixelRatio||1);
+        const pad={l:48,t:16,r:16,b:28};
+        this._drawAxes(this.ctx, W, H, pad);
+        this._drawSeries(this.ctx, W, H, pad, series);
+        this.octx.clearRect(0,0,this.overlay.width,this.overlay.height);
+      }
+    }
+  
+    // Mount into #makeChart stub
+    async function mount(){
+      const el = document.getElementById('makeChart'); if(!el) return;
+      const chart = new MakeChart(el);
+      const ds = window.FG?.DataStore || await window.FG?.DataStoreClass?.init?.({ baseUrl: '.' });
+      chart.setState(window.state||{});
+      await chart.setDataStore(ds);
+  
+      // Update on state changes
+      window.addEventListener('fg:stateChanged', (e)=>{ chart.setState(e.detail||window.state||{}); chart._maybeLoadQuantiles(); chart.render(); });
+    }
+  
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', mount); else mount();
+  })();
+  </script>
+  
+<!-- =========================
+FG Pro UI v4 — Part 5/6 (Attempt% + Coupling)
+Paste this <script> block near the end of index.html AFTER Parts 1–4.
+Requires FG.DataStore (Part 2) and global `state` (Part 1/3).
+Canvas-based attempt chart + coupling, with compare Starter vs Backup toggle.
+========================= -->
+<script>
+  (function(){
+    const DMIN=18, DMAX=68;
+    const PX = (v)=>Math.max(0, Math.round(v));
+  
+    function logit(p){ p=Math.min(Math.max(+p,1e-9),1-1e-9); return Math.log(p/(1-p)); }
+    function sigmoid(x){ return 1/(1+Math.exp(-x)); }
+  
+    // Tiny tooltip
+    function makeTooltip(host){
+      const tip = document.createElement('div');
+      tip.style.position='fixed'; tip.style.pointerEvents='none'; tip.style.padding='6px 8px';
+      tip.style.font='12px/1.3 ui-sans-serif,system-ui'; tip.style.background='rgba(17,24,39,.92)';
+      tip.style.color='#fff'; tip.style.borderRadius='8px'; tip.style.boxShadow='0 8px 24px rgba(0,0,0,.24)'; tip.style.zIndex=9998; tip.style.display='none';
+      host.appendChild(tip);
+      return { show(x,y,html){ tip.innerHTML=html; tip.style.left=(x+14)+'px'; tip.style.top=(y+14)+'px'; tip.style.display='block'; }, hide(){ tip.style.display='none'; } };
+    }
+  
+    class AttemptChart {
+      constructor(container){
+        this.root = typeof container==='string' ? document.querySelector(container) : container;
+        this.canvas = document.createElement('canvas');
+        this.canvas.style.width='100%'; this.canvas.style.height='340px'; this.canvas.style.display='block';
+        this.overlay = document.createElement('canvas');
+        this.overlay.style.position='absolute'; this.overlay.style.left=0; this.overlay.style.top=0; this.overlay.style.width='100%'; this.overlay.style.height='340px'; this.overlay.style.pointerEvents='none';
+        this.host = document.createElement('div'); this.host.className='relative w-full';
+        this.host.appendChild(this.canvas); this.host.appendChild(this.overlay);
+  
+        // Controls + info area (under canvas)
+        this.ctrl = document.createElement('div');
+        this.ctrl.className='mt-2 flex flex-wrap items-center gap-3 text-sm';
+        this.info = document.createElement('div');
+        this.info.className='mt-2 text-xs text-ink-700';
+  
+        const parentCard = document.getElementById('attemptTab');
+        const chartStub = document.getElementById('attemptChart');
+        if(chartStub){ chartStub.replaceWith(this.host); }
+        parentCard?.appendChild(this.ctrl); parentCard?.appendChild(this.info);
+  
+        this.ctx = this.canvas.getContext('2d'); this.octx = this.overlay.getContext('2d'); this.tooltip = makeTooltip(document.body);
+        this._ro = new ResizeObserver(()=> this.resize()); this._ro.observe(this.host);
+  
+        // Compare toggle
+        this.compare = false; this._buildControls();
+  
+        // Mouse layer
+        this._mouseCanvas = document.createElement('canvas');
+        this._mouseCanvas.style.position='absolute'; this._mouseCanvas.style.inset=0; this._mouseCanvas.style.background='transparent'; this._mouseCanvas.style.cursor='crosshair';
+        this.host.appendChild(this._mouseCanvas);
+        this._mouseCanvas.addEventListener('mousemove', (e)=> this.onHover(e));
+        this._mouseCanvas.addEventListener('mouseleave', ()=> this.tooltip.hide());
+  
+        this.ds=null; this.state=null; this._series=null; this._scales=null;
+      }
+  
+      _buildControls(){
+        this.ctrl.innerHTML='';
+        const pill = document.createElement('div'); pill.className='seg';
+        const s1 = document.createElement('button'); s1.textContent='Single'; s1.className='on';
+        const s2 = document.createElement('button'); s2.textContent='Compare starter vs backup'; s2.className='off';
+        pill.appendChild(s1); pill.appendChild(s2);
+        this.ctrl.appendChild(pill);
+        const note = document.createElement('span'); note.className='text-xs text-ink-500'; note.textContent='If no backup exists, comparison is disabled.';
+        this.ctrl.appendChild(note);
+        const that=this;
+        function set(mode){ that.compare=(mode==='compare'); s1.classList.toggle('on', !that.compare); s1.classList.toggle('off', that.compare); s2.classList.toggle('on', that.compare); s2.classList.toggle('off', !that.compare); that.render(); }
+        s1.addEventListener('click', ()=> set('single'));
+        s2.addEventListener('click', ()=> set('compare'));
+      }
+  
+      async setDataStore(ds){ this.ds = ds || window.FG?.DataStore || await window.FG?.DataStoreClass?.init?.({ baseUrl: '.' }); this.resize(); this.render(); }
+      setState(s){ this.state = s; this.render(); }
+  
+      resize(){
+        const dpr = Math.min(2, window.devicePixelRatio||1);
+        const w = this.host.clientWidth||800; const h = 340;
+        for(const c of [this.canvas,this.overlay,this._mouseCanvas]){ c.width=PX(w*dpr); c.height=PX(h*dpr); c.style.width=w+'px'; c.style.height=h+'px'; c.getContext('2d').setTransform(dpr,0,0,dpr,0,0); }
+        this.render();
+      }
+  
+      _findStarterAndBackup(){
+        const ds=this.ds, st=this.state; if(!ds||!st?.team) return {starter:null, backup:null};
+        const ks = ds.getKickers(st.team)||[]; if(!ks.length) return {starter:null, backup:null};
+        const starter = ks.find(k=>!!k.starter) || ks[0];
+        const backup = ks.find(k=> String(k.id)!==String(starter.id) && (k.active!==false) );
+        return {starter, backup};
+      }
+  
+      _calcSeries(){
+        const ds=this.ds, st=this.state; if(!ds||!st) return null;
+        const env=st.env||'indoor', s=st.scoreBin||'close', t=st.timeBin||'mid', y=st.ytgBin||'med';
+        const {starter, backup} = this._findStarterAndBackup();
+        const kid = st.kicker || starter?.id || null;
+  
+        const x=[], base=[], coupStarter=[], coupBackup=[];
+        for(let d=DMIN; d<=DMAX; d++){
+          const pA = ds.getAttemptProb({ env, distance:d, score_bin:s, time_bin:t, ytg_bin:y });
+          base.push(pA);
+          const pCoupledStarter = ds.getCoupledAttemptProb({ env, distance:d, score_bin:s, time_bin:t, ytg_bin:y, kickerId:kid, temp_F:st.tempF||60, wind_mph:st.wind||0 });
+          coupStarter.push(pCoupledStarter);
+          const pCoupledBackup = (this.compare && backup) ? ds.getCoupledAttemptProb({ env, distance:d, score_bin:s, time_bin:t, ytg_bin:y, kickerId:backup.id, temp_F:st.tempF||60, wind_mph:st.wind||0 }) : null;
+          if(this.compare) coupBackup.push(pCoupledBackup);
+          x.push(d);
+        }
+        return {x, base, coupStarter, coupBackup, starter, backup};
+      }
+  
+      _drawAxes(ctx,W,H,pad){
+        ctx.clearRect(0,0,W,H); ctx.save(); ctx.translate(pad.l,pad.t); const w=W-pad.l-pad.r, h=H-pad.t-pad.b;
+        ctx.strokeStyle='#e5e7eb'; ctx.lineWidth=1; ctx.beginPath();
+        for(let gy=0; gy<=10; gy++){ const y=h-h*(gy/10); ctx.moveTo(0,y); ctx.lineTo(w,y); }
+        for(let gx=0; gx<=5; gx++){ const x=w*(gx/5); ctx.moveTo(x,0); ctx.lineTo(x,h); }
+        ctx.stroke();
+        // labels
+        ctx.fillStyle='#334155'; ctx.font='12px ui-sans-serif,system-ui'; ctx.textAlign='right';
+        for(let gy=0; gy<=10; gy+=2){ const v=gy*10; const y=h-h*(gy/10); ctx.fillText(v+'%', -6, y+4); }
+        ctx.textAlign='center'; for(let d=20; d<=68; d+=8){ const x=w*((d-DMIN)/(DMAX-DMIN)); ctx.fillText(d+'y', x, h+18); }
+        ctx.restore();
+      }
+  
+      _drawSeries(ctx,W,H,pad,series){
+        ctx.save(); ctx.translate(pad.l,pad.t); const w=W-pad.l-pad.r, h=H-pad.t-pad.b;
+        const x = (d)=> w*((d-DMIN)/(DMAX-DMIN)); const y = (p)=> h*(1-p);
+        this._scales = { x, y, xi:(px)=> (px - pad.l)/(W-pad.l-pad.r)*(DMAX-DMIN)+DMIN };
+  
+        // curves
+        function line(color, arr){ ctx.strokeStyle=color; ctx.lineWidth=2.25; ctx.beginPath(); for(let d=DMIN; d<=DMAX; d++){ const i=d-DMIN; const px=x(d), py=y(arr[i]); if(d===DMIN) ctx.moveTo(px,py); else ctx.lineTo(px,py);} ctx.stroke(); }
+        // Base attempt
+        line('#6366f1', series.base); // indigo-500
+        // Starter-coupled
+        line('#10b981', series.coupStarter); // emerald-500
+        // Backup (optional)
+        if(this.compare && series.coupBackup?.length){ line('#f43f5e', series.coupBackup.map(v=>v==null? series.base[0]: v)); }
+  
+        // Legend
+        ctx.fillStyle='#0f172a'; ctx.font='12px ui-sans-serif,system-ui';
+        function sw(x0,y0,color,label){ ctx.fillStyle=color; ctx.fillRect(x0,y0,14,3); ctx.fillStyle='#0f172a'; ctx.fillText(label, x0+20, y0+4); }
+        sw(8, 10, '#6366f1', 'Base Attempt%');
+        const stName = series.starter? (series.starter.name||'Starter') : 'Kicker';
+        sw(8, 28, '#10b981', `${stName} (coupled)`);
+        if(this.compare && series.backup) sw(8, 46, '#f43f5e', `${series.backup.name||'Backup'} (coupled)`);
+  
+        // Context label (score/time/ytg)
+        const st=this.state||{}; const ctxLabel=`${st.scoreBin||'close'} • ${st.timeBin||'mid'} • ${st.ytgBin||'med'} • ${st.env||'indoor'}`;
+        ctx.fillStyle='#334155'; ctx.textAlign='right'; ctx.fillText(ctxLabel, w-8, 16);
+  
+        ctx.restore();
+      }
+  
+      _updateInfo(series){
+        const ds=this.ds, st=this.state; if(!ds||!st) { this.info.textContent=''; return; }
+        const {A,B,C} = ds._sens||{A:0,B:0,C:1};
+        const d = Math.round(st.distance||45);
+        const pA = ds.getAttemptProb({ env:st.env||'indoor', distance:d, score_bin:st.scoreBin||'close', time_bin:st.timeBin||'mid', ytg_bin:st.ytgBin||'med' });
+        const pL = ds.getMakeProb({ env:st.env||'indoor', distance:d, temp_F:st.tempF||60, wind_mph:st.wind||0 });
+        const {starter, backup} = this._findStarterAndBackup();
+  
+        function rowFor(id,label){
+          const dK = ds.getKickerDeltaLogit(id, d).delta_logit || 0; // == logit(PM_k) - logit(PM_L)
+          const lp = A + C*logit(pA) + B*dK; const pC = sigmoid(lp);
+          const sens = pC*(1-pC)*B; // d Attempt / d (delta_make_logit)
+          const pp10 = sens*0.1*100; // per +0.1 logit, in percentage points
+          return `<tr><td class="px-2 py-1 text-ink-700">${label}</td><td class="px-2 py-1">${(pA*100).toFixed(1)}%</td><td class="px-2 py-1">${(pC*100).toFixed(1)}%</td><td class="px-2 py-1">${pp10.toFixed(2)} pp / +0.1 logit</td></tr>`;
+        }
+  
+        const aRow = `<div class="pill">A=${A.toFixed(3)}</div><div class="pill">B=${B.toFixed(3)}</div><div class="pill">C=${C.toFixed(3)}</div>`;
+        const hdr = `<table class="mt-2 border border-ink-200 rounded-lg overflow-hidden text-xs"><thead class="bg-ink-50 text-ink-600"><tr><th class="px-2 py-1 text-left">At ${d}y</th><th class="px-2 py-1 text-left">Base</th><th class="px-2 py-1 text-left">Coupled</th><th class="px-2 py-1 text-left">Sensitivity</th></tr></thead><tbody>`;
+        const stLabel = starter? (starter.name||'Starter') : 'Kicker';
+        let body = rowFor(this.state?.kicker || starter?.id || null, stLabel);
+        if(this.compare && backup){ body += rowFor(backup.id, backup.name||'Backup'); }
+        const tbl = `${aRow}${hdr}${body}</tbody></table>`;
+        this.info.innerHTML = tbl;
+      }
+  
+      onHover(evt){
+        const rect = this.canvas.getBoundingClientRect(); const x = evt.clientX - rect.left; const y = evt.clientY - rect.top;
+        const st = this._scales; if(!st) return; const dApprox = Math.round(st.xi(x)); const d=Math.min(DMAX, Math.max(DMIN, dApprox));
+        const i=d-DMIN; const s=this._series; if(!s) return;
+        const pB=s.base[i]; const pS=s.coupStarter[i]; const pBk = (this.compare && s.coupBackup?.length)? s.coupBackup[i] : null;
+        const html = `<div><b>${d} yards</b></div>
+                      <div>Base: ${(pB*100).toFixed(1)}%</div>
+                      <div>${(s.starter?.name||'Kicker')}: ${(pS*100).toFixed(1)}%</div>
+                      ${pBk!=null? `<div>${(s.backup?.name||'Backup')}: ${(pBk*100).toFixed(1)}%</div>`: ''}`;
+        this.tooltip.show(evt.clientX, evt.clientY, html);
+        this._drawHover(d);
+      }
+  
+      _drawHover(d){
+        const W=this.overlay.width/(window.devicePixelRatio||1), H=this.overlay.height/(window.devicePixelRatio||1);
+        const pad={l:48,t:16,r:16,b:28}; const w=W-pad.l-pad.r, h=H-pad.t-pad.b;
+        const x = (dd)=> w*((dd-DMIN)/(DMAX-DMIN));
+        const y = (p)=> h*(1-p);
+        const i=d-DMIN; const s=this._series; if(!s) return;
+        this.octx.setTransform(1,0,0,1,0,0); this.octx.clearRect(0,0,W,H); this.octx.setTransform(window.devicePixelRatio||1,0,0,window.devicePixelRatio||1,0,0);
+        this.octx.translate(pad.l,pad.t); this.octx.strokeStyle='rgba(15,23,42,.25)'; this.octx.beginPath(); this.octx.moveTo(x(d),0); this.octx.lineTo(x(d),h); this.octx.stroke();
+        // markers
+        this.octx.fillStyle='#6366f1'; this.octx.beginPath(); this.octx.arc(x(d), y(s.base[i]), 3.5, 0, Math.PI*2); this.octx.fill();
+        this.octx.fillStyle='#10b981'; this.octx.beginPath(); this.octx.arc(x(d), y(s.coupStarter[i]), 3.5, 0, Math.PI*2); this.octx.fill();
+        if(this.compare && s.coupBackup?.length){ this.octx.fillStyle='#f43f5e'; this.octx.beginPath(); this.octx.arc(x(d), y(s.coupBackup[i]), 3.5, 0, Math.PI*2); this.octx.fill(); }
+      }
+  
+      render(){
+        if(!this.root||!this.ctx) return;
+        if(!this.ds||!this.state){ const ctx=this.ctx, W=this.canvas.width/(window.devicePixelRatio||1), H=this.canvas.height/(window.devicePixelRatio||1); ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,W,H); ctx.font='12px ui-sans-serif,system-ui'; ctx.fillStyle='#64748b'; ctx.fillText('Loading data…', 12, 18); return; }
+        this._series = this._calcSeries(); if(!this._series) return;
+        const W=this.canvas.width/(window.devicePixelRatio||1), H=this.canvas.height/(window.devicePixelRatio||1); const pad={l:48,t:16,r:16,b:28};
+        this._drawAxes(this.ctx,W,H,pad); this._drawSeries(this.ctx,W,H,pad,this._series); this.octx.clearRect(0,0,this.overlay.width,this.overlay.height);
+        this._updateInfo(this._series);
+      }
+    }
+  
+    async function mount(){
+      const el = document.getElementById('attemptTab'); if(!el) return;
+      const chart = new AttemptChart(el);
+      const ds = window.FG?.DataStore || await window.FG?.DataStoreClass?.init?.({ baseUrl: '.' });
+      await chart.setDataStore(ds); chart.setState(window.state||{});
+      window.addEventListener('fg:stateChanged', (e)=>{ chart.setState(e.detail||window.state||{}); });
+    }
+  
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', mount); else mount();
+  })();
+  </script>
+  
+  <!-- =========================
+FG Pro UI v4 — Part 6/6 (Decision Edge + Export)
+Paste this <script> block near the end of index.html AFTER Parts 1–5.
+- Computes EP/WP edges for FG vs Go vs Punt
+- Prefers optional wp_edges.json (WP with CI); otherwise uses EP proxy
+- One-click "Copy snapshot" export of current inputs/outputs
+- About panel shows model/data versions from manifest (Part 2)
+========================= -->
+<script>
+  (function(){
+    const PX = (v)=>Math.max(0, Math.round(v));
+  
+    function logit(p){ p=Math.min(Math.max(+p,1e-9),1-1e-9); return Math.log(p/(1-p)); }
+    function sigmoid(x){ return 1/(1+Math.exp(-x)); }
+    function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
+  
+    // ---------- optional WP edges loader ----------
+    let WPIndex = null; // Map keyed by env|d|s|t|y
+    async function loadWPEdges(){
+      try{
+        const res = await fetch('./wp_edges.json', { cache: 'no-store' });
+        if(!res.ok) return null; const obj = await res.json();
+        const grid = Array.isArray(obj?.grid) ? obj.grid : [];
+        const map = new Map();
+        for(const r of grid){
+          const key = [r.env || r.indoor_outdoor || 'indoor', Math.round(+r.distance||0), r.score_bin||'close', r.time_bin||'mid', r.ytg_bin||'med'].join('|');
+          map.set(key, r);
+        }
+        WPIndex = map; return map;
+      }catch{ return null; }
+    }
+  
+    function lookupWP(env, d, s, t, y){
+      if(!WPIndex) return null; const key=[env,Math.round(d),s,t,y].join('|'); return WPIndex.get(key)||null;
+    }
+  
+    // ---------- EP proxy (when no WP edges file) ----------
+    function ep_go_from_yardline(y100){
+      // Rough 1st&10 EP at opponent yardline (y100 ∈ [1,51])
+      // Linear-ish: high near GL, ~2.4 at 40, ~2.0 at 50
+      const ep = 6.2 - 0.075*y100; // 6.2 @1, ~2.4@50
+      return clamp(ep, 1.5, 6.0);
+    }
+    function ep_punt_from_yardline(y100){
+      // Approx EP cost of punting from opponent territory.
+      // ~-0.6 near opp40, ~-0.4 near opp50, ~-1.0 near opp20
+      const base = 0.6 + 0.02*(40 - y100);
+      return -clamp(base, 0.2, 1.2);
+    }
+  
+    function computeEdges(ds, st){
+      const env=st.env||'indoor', d=clamp(Math.round(st.distance||45), 18, 68);
+      const s=st.scoreBin||'close', t=st.timeBin||'mid', y=st.ytgBin||'med';
+      const yard100 = clamp(d-17, 1, 99);
+  
+      const pL = ds.getMakeProb({ env, distance:d, temp_F:st.tempF||60, wind_mph:st.wind||0 });
+      const del = ds.getKickerDeltaLogit(st.kicker||null, d) || {delta_logit:0, se:0};
+      const w = 1 / (1 + Math.pow((+del.se||0)/0.8, 2)); // shrink on noisy deltas (same as Make chart)
+      const pK = sigmoid(logit(pL) + (+del.delta_logit||0) * w);
+  
+      // Try WP edges first
+      const wp = lookupWP(env, d, s, t, y);
+      if(wp){
+        // Expect fields like edge_fg_go_mean / _p10 / _p90 etc. If absent, compute from provided make/attempt.
+        const fgGo = (wp.edge_fg_go_mean!=null) ? wp.edge_fg_go_mean : null;
+        const fgPunt = (wp.edge_fg_punt_mean!=null) ? wp.edge_fg_punt_mean : null;
+        const ciFGGo = (wp.edge_fg_go_p10!=null && wp.edge_fg_go_p90!=null) ? {lo:wp.edge_fg_go_p10, hi:wp.edge_fg_go_p90} : null;
+        const ciFGPu = (wp.edge_fg_punt_p10!=null && wp.edge_fg_punt_p90!=null) ? {lo:wp.edge_fg_punt_p10, hi:wp.edge_fg_punt_p90} : null;
+  
+        return {
+          metric: 'WP', unit: 'pp',
+          p_league: pL, p_kicker: pK,
+          actions: {
+            FG_vs_Go: { mean: fgGo, ci: ciFGGo },
+            FG_vs_Punt: { mean: fgPunt, ci: ciFGPu }
+          }
+        };
+      }
+  
+      // Fallback: EP proxy
+      const EP_kick = 3 * pK;
+      const EP_go   = ep_go_from_yardline(yard100);
+      const EP_punt = ep_punt_from_yardline(yard100);
+  
+      const fg_go_edge = EP_kick - EP_go;
+      const fg_pu_edge = EP_kick - EP_punt;
+  
+      return {
+        metric: 'EP', unit: 'pts',
+        p_league: pL, p_kicker: pK,
+        actions: {
+          FG_vs_Go: { mean: fg_go_edge, ci: null },
+          FG_vs_Punt: { mean: fg_pu_edge, ci: null }
+        },
+        ep_breakdown: { EP_kick, EP_go, EP_punt, yardline_100: yard100 }
+      };
+    }
+  
+    // ---------- UI rendering ----------
+    function ensurePanel(){
+      const tab = document.getElementById('decisionTab') || document.getElementById('edgePanel') || document.getElementById('decisionPanel');
+      if(!tab) return null;
+      // main panel
+      let wrap = document.getElementById('fgEdgeWrap');
+      if(!wrap){
+        wrap = document.createElement('div'); wrap.id='fgEdgeWrap'; wrap.className='grid grid-cols-1 lg:grid-cols-2 gap-4';
+        tab.innerHTML=''; tab.appendChild(wrap);
+      }
+      // cards
+      let card = document.getElementById('fgEdgeCard');
+      if(!card){ card = document.createElement('section'); card.id='fgEdgeCard'; card.className='card card-pad'; wrap.appendChild(card); }
+      let about = document.getElementById('fgAboutCard');
+      if(!about){ about = document.createElement('section'); about.id='fgAboutCard'; about.className='card card-pad'; wrap.appendChild(about); }
+      return { card, about };
+    }
+  
+    function fmt(x, unit){
+      if(x==null || !isFinite(x)) return '—';
+      if(unit==='pp') return (x*100).toFixed(1)+' pp';
+      if(unit==='pts') return x.toFixed(2)+' pts';
+      return String(x);
+    }
+  
+    function barHTML(val, unit){
+      // simple diverging bar (- to +)
+      const v = Math.max(-3, Math.min(3, (unit==='pp'? val*100 : val))); // normalize roughly
+      const pct = Math.abs(v)/3*100; const dir = v>=0 ? 'to right' : 'to left';
+      const color = v>=0 ? 'rgba(16,185,129,.9)' : 'rgba(244,63,94,.9)';
+      const grad = `linear-gradient(${dir}, ${color} ${pct}%, rgba(0,0,0,0) ${pct}%)`;
+      return `<div class="h-2 rounded bg-ink-100 overflow-hidden" title="${fmt(val, unit)}"><div class="h-2" style="width:100%; background:${grad}"></div></div>`;
+    }
+  
+    function renderEdges(card, ds, st, res){
+      const m = res.metric; const unit = res.unit;
+      const pL = res.p_league, pK = res.p_kicker; const d = Math.round(st.distance||45);
+  
+      const rows = [];
+      function addRow(label, v, ci){
+        const ciHTML = ci? `<div class="text-[11px] text-ink-500">80% CI: ${fmt(ci.lo, unit)} to ${fmt(ci.hi, unit)}</div>` : '';
+        rows.push(`<tr>
+          <td class="px-2 py-2 text-ink-700">${label}</td>
+          <td class="px-2 py-2 whitespace-nowrap">${fmt(v, unit)}</td>
+          <td class="px-2 py-2 w-48">${barHTML(v, unit)}${ciHTML}</td>
+        </tr>`);
+      }
+  
+      addRow('FG vs Go',   res.actions.FG_vs_Go.mean,   res.actions.FG_vs_Go.ci);
+      addRow('FG vs Punt', res.actions.FG_vs_Punt.mean, res.actions.FG_vs_Punt.ci);
+  
+      const ctxLabel = `${st.scoreBin||'close'} • ${st.timeBin||'mid'} • ${st.ytgBin||'med'} • ${st.env||'indoor'}`;
+      const header = `<div class="flex items-center justify-between mb-3">
+        <div>
+          <div class="text-sm font-semibold">Decision Edge (${m})</div>
+          <div class="text-[12px] text-ink-500">At ${d} yards • ${ctxLabel}</div>
+        </div>
+        <div class="flex gap-2 items-center">
+          <div class="pill">League Make: ${(pL*100).toFixed(1)}%</div>
+          <div class="pill">Kicker: ${(pK*100).toFixed(1)}%</div>
+          <button id="copySnapshotBtn" class="btn">Copy snapshot</button>
+        </div>
+      </div>`;
+  
+      let epDetail = '';
+      if(res.metric==='EP' && res.ep_breakdown){
+        const b = res.ep_breakdown;
+        epDetail = `<div class="mt-2 grid grid-cols-3 gap-3 text-xs">
+          <div class="rounded border border-ink-200 p-2"><div class="text-ink-500">EP(FG)</div><div class="text-ink-800 text-sm">${b.EP_kick.toFixed(2)}</div></div>
+          <div class="rounded border border-ink-200 p-2"><div class="text-ink-500">EP(Go)</div><div class="text-ink-800 text-sm">${b.EP_go.toFixed(2)}</div></div>
+          <div class="rounded border border-ink-200 p-2"><div class="text-ink-500">EP(Punt)</div><div class="text-ink-800 text-sm">${b.EP_punt.toFixed(2)}</div></div>
+        </div>`;
+      }
+  
+      card.innerHTML = header +
+        `<table class="w-full text-sm border border-ink-200 rounded-lg overflow-hidden"><thead class="bg-ink-50 text-ink-600"><tr>
+          <th class="px-2 py-2 text-left">Comparison</th>
+          <th class="px-2 py-2 text-left">Edge</th>
+          <th class="px-2 py-2 text-left">Impact</th>
+        </tr></thead><tbody>${rows.join('')}</tbody></table>` + epDetail;
+  
+      // Bind copy
+      const btn = document.getElementById('copySnapshotBtn');
+      btn?.addEventListener('click', ()=> copySnapshot(ds, st, res));
+    }
+  
+    function renderAbout(aboutEl, ds){
+      const versions = ds?.getVersions?.() || { data:'local', schema:'v1' };
+      const mf = ds?._manifest || {};
+      const hashes = mf.model_hashes || {};
+      const items = Object.keys(hashes).map(k=>`<div class="flex justify-between"><span class="text-ink-500">${k}</span><span class="font-mono">${String(hashes[k]).slice(0,12)}</span></div>`).join('') || '<div class="text-ink-500">—</div>';
+      const when = mf.generated_at_epoch ? new Date(mf.generated_at_epoch*1000).toLocaleString() : 'local';
+      const files = ds?.files || {};
+      const present = Object.entries(files).filter(([name,url])=> name!=='manifest').map(([name,url])=>`<span class="pill">${name}${(ds && !String(ds[name]) && !url)?' (—)':''}</span>`).join(' ');
+  
+      aboutEl.innerHTML = `<div class="text-sm font-semibold mb-2">About this model</div>
+        <div class="text-xs text-ink-600">Data version: <span class="text-ink-800">${versions.data}</span> • Schema: <span class="text-ink-800">${versions.schema}</span></div>
+        <div class="text-xs text-ink-600 mt-2">Generated: <span class="text-ink-800">${when}</span></div>
+        <div class="text-xs text-ink-600 mt-2">Model hashes</div>
+        <div class="mt-1 text-xs space-y-1">${items}</div>
+        <div class="text-xs text-ink-600 mt-2">Loaded files</div>
+        <div class="mt-1 flex flex-wrap gap-1">${present}</div>`;
+    }
+  
+    async function copySnapshot(ds, st, res){
+      const payload = {
+        ts_iso: new Date().toISOString(),
+        team: st.team||null,
+        kicker: st.kicker||null,
+        env: st.env||'indoor',
+        distance: Math.round(st.distance||45),
+        temp_F: st.tempF||60,
+        wind_mph: st.wind||0,
+        score_bin: st.scoreBin||'close', time_bin: st.timeBin||'mid', ytg_bin: st.ytgBin||'med',
+        make_league: res.p_league, make_kicker: res.p_kicker,
+        edges: res.actions,
+        metric: res.metric, unit: res.unit,
+        about: ds?._manifest ? { generated_at_epoch: ds._manifest.generated_at_epoch||null, model_hashes: ds._manifest.model_hashes||null } : null
+      };
+      try{
+        await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+        window.FG?.toast?.('Snapshot copied to clipboard.', 'info', 2200);
+      }catch{
+        // fallback: offer a download
+        const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'fg_snapshot.json'; a.click(); URL.revokeObjectURL(a.href);
+        window.FG?.toast?.('Snapshot downloaded.', 'info', 2200);
+      }
+    }
+  
+    // ---------- Mount ----------
+    async function mount(){
+      const ds = window.FG?.DataStore || await window.FG?.DataStoreClass?.init?.({ baseUrl: '.' });
+      await loadWPEdges();
+      const panels = ensurePanel(); if(!panels) return;
+  
+      const renderAll = ()=>{
+        const st = window.state || {};
+        const res = computeEdges(ds, st);
+        renderEdges(panels.card, ds, st, res);
+        renderAbout(panels.about, ds);
+      };
+  
+      renderAll();
+      window.addEventListener('fg:stateChanged', renderAll);
+    }
+  
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', mount); else mount();
+  })();
+  </script>
+  
+
 </body>
 </html>

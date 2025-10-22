@@ -1,0 +1,35 @@
+{
+  "generated_at_epoch": 1761147543,
+  "items": [
+    {
+      "file": "fg_prob_grid_distance_env_temp_wind.json",
+      "bytes": 1549793,
+      "mtime_epoch": 1761147541,
+      "sha256": "4d4649a4d2a11c2ed6faec6103583399f0d73091a395a5b346d036a23cf740ef"
+    },
+    {
+      "file": "fg_attempt_grid_distance_env_context.json",
+      "bytes": 380607,
+      "mtime_epoch": 1761147543,
+      "sha256": "2100fd25ef7185c27c07bdeae33f8ebd4aab6e3a68dfbaf6fc6b25a6ddbcc1c0"
+    },
+    {
+      "file": "kicker_deltas_logit_banded.json",
+      "bytes": 47727,
+      "mtime_epoch": 1761147483,
+      "sha256": "6217de1c7c4c9be58d791585c7ae9048bdc966f23f2a01dcaa5b169c520edc9c"
+    },
+    {
+      "file": "kicker_deltas_by_distance.json",
+      "bytes": 468753,
+      "mtime_epoch": 1761147483,
+      "sha256": "b8c5edfce9f33ee3dff2d4db8e43a8bf9d42306cf71480aebf9e6736b274ac6e"
+    },
+    {
+      "file": "attempt_sensitivity.json",
+      "bytes": 222,
+      "mtime_epoch": 1761147508,
+      "sha256": "3660595c6aa8fdcec303cd18b8dfe1391d88b9c20c52f040d22c4726748ca829"
+    }
+  ]
+}

@@ -1,1 +1,1830 @@
-[{"kicker_id":"00-0023252","kicker_name":"R.Gould","attempts_eff":7.9544033702,"bands":{"long":{"delta_logit":0.0082871423,"se":0.2454286518,"n_eff":0.8937751247},"mid":{"delta_logit":-0.0046743644,"se":0.2195775721,"n_eff":2.7750039989},"short":{"delta_logit":0.0088896647,"se":0.3692277955,"n_eff":4.2856242466}}},{"kicker_id":"00-0023482","kicker_name":"M.Nugent","attempts_eff":0.2709554585,"bands":{"mid":{"delta_logit":0.0007206288,"se":0.2223633697,"n_eff":0.0681578703},"short":{"delta_logit":-0.00344006,"se":0.3721092537,"n_eff":0.2027975882}}},{"kicker_id":"00-0023853","kicker_name":"M.Prater","attempts_eff":28.3964781635,"bands":{"long":{"delta_logit":0.0335747584,"se":0.239497897,"n_eff":5.9620990808},"mid":{"delta_logit":0.0400385797,"se":0.2181870284,"n_eff":7.6606759587},"short":{"delta_logit":-0.075512054,"se":0.3445170267,"n_eff":14.3626537578},"xlong":{"delta_logit":0.0257711584,"se":0.4392855703,"n_eff":0.4110493662}}},{"kicker_id":"00-0024333","kicker_name":"S.Gostkowski","attempts_eff":0.8548946424,"bands":{"long":{"delta_logit":0.0023100358,"se":0.2460934321,"n_eff":0.2410742947},"mid":{"delta_logit":-0.00370341,"se":0.2218335464,"n_eff":0.3379539439},"short":{"delta_logit":-0.0064370425,"se":0.3715183987,"n_eff":0.2758664037}}},{"kicker_id":"00-0025565","kicker_name":"N.Folk","attempts_eff":38.5421018979,"bands":{"long":{"delta_logit":0.1358575223,"se":0.2389397989,"n_eff":10.627062162},"mid":{"delta_logit":0.0682738804,"se":0.216412904,"n_eff":11.989182051},"short":{"delta_logit":0.105958382,"se":0.3721129646,"n_eff":15.9258576848}}},{"kicker_id":"00-0025580","kicker_name":"M.Crosby","attempts_eff":8.7219464346,"bands":{"long":{"delta_logit":-0.019415978,"se":0.2431155466,"n_eff":1.4729772083},"mid":{"delta_logit":-0.0133635177,"se":0.2198663674,"n_eff":1.8371987284},"short":{"delta_logit":-0.0067755945,"se":0.3653123344,"n_eff":5.4117704979}}},{"kicker_id":"00-0025944","kicker_name":"S.Hauschka","attempts_eff":0.0592197505,"bands":{"mid":{"delta_logit":-0.0011626412,"se":0.2222782466,"n_eff":0.0296098752},"short":{"delta_logit":-0.0039300756,"se":0.3722405089,"n_eff":0.0296098752}}},{"kicker_id":"00-0026858","kicker_name":"G.Gano","attempts_eff":22.9023026769,"bands":{"long":{"delta_logit":0.0463363724,"se":0.2416834178,"n_eff":4.8856455523},"mid":{"delta_logit":-0.003521639,"se":0.2167463486,"n_eff":6.1138551238},"short":{"delta_logit":-0.0769969,"se":0.3468785534,"n_eff":11.9028020009}}},{"kicker_id":"00-0026968","kicker_name":"R.Succop","attempts_eff":8.3324738567,"bands":{"long":{"delta_logit":-0.0272240478,"se":0.2433065831,"n_eff":1.0726599002},"mid":{"delta_logit":0.0105013827,"se":0.2206955627,"n_eff":2.6012743177},"short":{"delta_logit":-0.0109057113,"se":0.3655160122,"n_eff":4.6585396388}}},{"kicker_id":"00-0028660","kicker_name":"D.Bailey","attempts_eff":0.6969410956,"bands":{"long":{"delta_logit":-0.0031115121,"se":0.2459319657,"n_eff":0.1577722606},"mid":{"delta_logit":-0.0025043442,"se":0.2220177485,"n_eff":0.220207011},"short":{"delta_logit":-0.0024337831,"se":0.3721347691,"n_eff":0.318961824}}},{"kicker_id":"00-0028787","kicker_name":"K.Forbath","attempts_eff":0.0933373192,"bands":{"mid":{"delta_logit":-0.0012105852,"se":0.2222740588,"n_eff":0.0308316424},"short":{"delta_logit":0.0004385998,"se":0.3729320596,"n_eff":0.0625056767}}},{"kicker_id":"00-0029421","kicker_name":"R.Bullock","attempts_eff":6.9770295711,"bands":{"long":{"delta_logit":0.0010630981,"se":0.2452231962,"n_eff":0.7746241302},"mid":{"delta_logit":-0.0126013131,"se":0.219015199,"n_eff":2.8477587586},"short":{"delta_logit":0.0148903015,"se":0.3713419466,"n_eff":3.3546466823}}},{"kicker_id":"00-0029597","kicker_name":"J.Tucker","attempts_eff":36.0755384797,"bands":{"long":{"delta_logit":-0.0626589358,"se":0.230579293,"n_eff":9.0553078903},"mid":{"delta_logit":0.001393292,"se":0.2135962717,"n_eff":10.2615116249},"short":{"delta_logit":0.1029489951,"se":0.3713234892,"n_eff":16.1783523579},"xlong":{"delta_logit":-0.035762689,"se":0.4401701597,"n_eff":0.5803666065}}},{"kicker_id":"00-0029621","kicker_name":"G.Zuerlein","attempts_eff":25.5355384506,"bands":{"long":{"delta_logit":-0.0330591982,"se":0.2389206922,"n_eff":3.9056249696},"mid":{"delta_logit":-0.0219416953,"se":0.214018707,"n_eff":8.009315735},"short":{"delta_logit":-0.0824832836,"se":0.3444553066,"n_eff":13.3965241699},"xlong":{"delta_logit":0.0088878185,"se":0.441897074,"n_eff":0.224073576}}},{"kicker_id":"00-0029822","kicker_name":"B.McManus","attempts_eff":38.2140011294,"bands":{"long":{"delta_logit":0.0198614776,"se":0.2353161595,"n_eff":8.5355816793},"mid":{"delta_logit":-0.0431887013,"se":0.211669296,"n_eff":9.3158383201},"short":{"delta_logit":-0.0089554555,"se":0.3490305512,"n_eff":20.00946279},"xlong":{"delta_logit":-0.0148463759,"se":0.441567005,"n_eff":0.35311834}}},{"kicker_id":"00-0030098","kicker_name":"D.Hopkins","attempts_eff":27.297801457,"bands":{"long":{"delta_logit":-0.0265196493,"se":0.2358840224,"n_eff":6.3449538134},"mid":{"delta_logit":-0.0336497917,"se":0.2125455885,"n_eff":8.9392188363},"short":{"delta_logit":-0.0643678988,"se":0.3487210139,"n_eff":12.0136288073}}},{"kicker_id":"00-0030332","kicker_name":"B.Maher","attempts_eff":11.9480072108,"bands":{"long":{"delta_logit":-0.0246871741,"se":0.2406723863,"n_eff":2.9686969934},"mid":{"delta_logit":0.0061564818,"se":0.2196455018,"n_eff":3.4726107222},"short":{"delta_logit":0.0271460635,"se":0.370978014,"n_eff":5.3762908778},"xlong":{"delta_logit":0.0159912177,"se":0.4425844873,"n_eff":0.1304086174}}},{"kicker_id":"00-0030850","kicker_name":"C.Parkey","attempts_eff":0.7958032017,"bands":{"mid":{"delta_logit":0.0024165565,"se":0.2221857327,"n_eff":0.3803990499},"short":{"delta_logit":-0.0060571014,"se":0.3714106074,"n_eff":0.4154041518}}},{"kicker_id":"00-0031136","kicker_name":"C.Boswell","attempts_eff":48.2633275527,"bands":{"long":{"delta_logit":0.1047337965,"se":0.2337074054,"n_eff":13.3580857748},"mid":{"delta_logit":0.0575979767,"se":0.2144125991,"n_eff":13.6221876624},"short":{"delta_logit":-0.0217488187,"se":0.3474245861,"n_eff":19.6220168639},"xlong":{"delta_logit":0.0498219732,"se":0.4261121755,"n_eff":1.6610372516}}},{"kicker_id":"00-0031203","kicker_name":"C.Santos","attempts_eff":35.4336708427,"bands":{"long":{"delta_logit":0.0544709823,"se":0.2349303154,"n_eff":10.2288646391},"mid":{"delta_logit":0.0049812591,"se":0.2126237065,"n_eff":11.7395168205},"short":{"delta_logit":0.0898984826,"se":0.3722322246,"n_eff":13.4021847873},"xlong":{"delta_logit":-0.0052844603,"se":0.444180443,"n_eff":0.0631045958}}},{"kicker_id":"00-0031385","kicker_name":"S.Castillo","attempts_eff":0.4151587746,"bands":{"long":{"delta_logit":0.0010846626,"se":0.24629966,"n_eff":0.0621418694},"mid":{"delta_logit":-0.0031512273,"se":0.2220298333,"n_eff":0.1619487704},"short":{"delta_logit":-0.0078571665,"se":0.3713854071,"n_eff":0.1910681347}}},{"kicker_id":"00-0031492","kicker_name":"J.Myers","attempts_eff":47.0686929286,"bands":{"long":{"delta_logit":0.0661133676,"se":0.2315693013,"n_eff":13.3957927566},"mid":{"delta_logit":0.0185861287,"se":0.212335155,"n_eff":13.1544268495},"short":{"delta_logit":-0.0542156887,"se":0.3425931177,"n_eff":19.4371710127},"xlong":{"delta_logit":-0.0805529465,"se":0.4372866324,"n_eff":1.0813023099}}},{"kicker_id":"00-0032065","kicker_name":"B.Pinion","attempts_eff":0.0596776002,"bands":{"xlong":{"delta_logit":-0.0049981953,"se":0.4442042803,"n_eff":0.0596776002}}},{"kicker_id":"00-0032087","kicker_name":"J.Lambo","attempts_eff":0.3182191716,"bands":{"long":{"delta_logit":-0.0039593581,"se":0.2458638191,"n_eff":0.173164065},"mid":{"delta_logit":-0.0019524855,"se":0.2221765815,"n_eff":0.0853685835},"short":{"delta_logit":0.000418822,"se":0.3729322212,"n_eff":0.0596865231}}},{"kicker_id":"00-0032569","kicker_name":"W.Lutz","attempts_eff":40.3006381491,"bands":{"long":{"delta_logit":0.0186306326,"se":0.236503327,"n_eff":7.5910445144},"mid":{"delta_logit":0.0160818087,"se":0.2146015625,"n_eff":10.1446433261},"short":{"delta_logit":0.0054967141,"se":0.34947691,"n_eff":21.8049749817},"xlong":{"delta_logit":-0.03788446,"se":0.4384468481,"n_eff":0.759975327}}},{"kicker_id":"00-0032669","kicker_name":"T.Bertolet","attempts_eff":0.3608339388,"bands":{"short":{"delta_logit":0.002529311,"se":0.3729149939,"n_eff":0.3608339388}}},{"kicker_id":"00-0032726","kicker_name":"K.Fairbairn","attempts_eff":52.2110325176,"bands":{"long":{"delta_logit":0.0391695719,"se":0.22427593,"n_eff":18.4150752555},"mid":{"delta_logit":0.0384902894,"se":0.216896248,"n_eff":9.077959321},"short":{"delta_logit":-0.0624679021,"se":0.3362280008,"n_eff":24.6506240546},"xlong":{"delta_logit":0.0082935745,"se":0.4435620764,"n_eff":0.0673738864}}},{"kicker_id":"00-0032835","kicker_name":"J.Brown","attempts_eff":0.0600233091,"bands":{"short":{"delta_logit":-0.0037726826,"se":0.3722293793,"n_eff":0.0600233091}}},{"kicker_id":"00-0032870","kicker_name":"A.Rosas","attempts_eff":0.6411936092,"bands":{"long":{"delta_logit":-0.0063517887,"se":0.2455788482,"n_eff":0.2781184545},"mid":{"delta_logit":0.0001345187,"se":0.2222503099,"n_eff":0.150463014},"short":{"delta_logit":-0.0066118187,"se":0.3715669002,"n_eff":0.2126121406}}},{"kicker_id":"00-0033138","kicker_name":"S.Ficken","attempts_eff":0.4601064416,"bands":{"long":{"delta_logit":-0.0023188973,"se":0.2460715286,"n_eff":0.0933987111},"mid":{"delta_logit":0.0003007207,"se":0.2223729645,"n_eff":0.0284365231},"short":{"delta_logit":0.002371342,"se":0.3729162821,"n_eff":0.3382712074}}},{"kicker_id":"00-0033303","kicker_name":"H.Butker","attempts_eff":48.3021994555,"bands":{"long":{"delta_logit":-0.042001692,"se":0.2299027709,"n_eff":10.3565155648},"mid":{"delta_logit":0.0154336896,"se":0.2163591907,"n_eff":7.9739719699},"short":{"delta_logit":0.0215997705,"se":0.344795898,"n_eff":29.1234727375},"xlong":{"delta_logit":0.0045954298,"se":0.4357147639,"n_eff":0.8482391833}}},{"kicker_id":"00-0033702","kicker_name":"Y.Koo","attempts_eff":37.4301578338,"bands":{"long":{"delta_logit":-0.0301885847,"se":0.2336432173,"n_eff":7.8913380422},"mid":{"delta_logit":-0.0495049631,"se":0.2088503719,"n_eff":12.3847087558},"short":{"delta_logit":-0.030626063,"se":0.3486920298,"n_eff":17.0401457247},"xlong":{"delta_logit":-0.0095233716,"se":0.4438281201,"n_eff":0.1139653111}}},{"kicker_id":"00-0033787","kicker_name":"J.Elliott","attempts_eff":46.2257913118,"bands":{"long":{"delta_logit":-0.0445809369,"se":0.2300542873,"n_eff":10.1389109107},"mid":{"delta_logit":0.0696338141,"se":0.217352521,"n_eff":10.9491701002},"short":{"delta_logit":0.0237955478,"se":0.3497232664,"n_eff":24.4306557461},"xlong":{"delta_logit":-0.0109448471,"se":0.4377838584,"n_eff":0.7070545548}}},{"kicker_id":"00-0033854","kicker_name":"D.Ogunbowale","attempts_eff":0.255843473,"bands":{"short":{"delta_logit":0.0017940268,"se":0.3729209918,"n_eff":0.255843473}}},{"kicker_id":"00-0033862","kicker_name":"Z.Gonzalez","attempts_eff":10.6115303058,"bands":{"long":{"delta_logit":-0.0154199225,"se":0.2432534358,"n_eff":1.5193298852},"mid":{"delta_logit":0.000117478,"se":0.2169651703,"n_eff":6.1234070636},"short":{"delta_logit":0.0206223611,"se":0.3727687588,"n_eff":2.9687933571}}},{"kicker_id":"00-0034084","kicker_name":"M.Badgley","attempts_eff":9.2066346564,"bands":{"long":{"delta_logit":-0.0038972294,"se":0.2447155845,"n_eff":0.9388880184},"mid":{"delta_logit":0.0119631567,"se":0.2197177715,"n_eff":3.8095123369},"short":{"delta_logit":0.0034860712,"se":0.3681261967,"n_eff":4.4582343011}}},{"kicker_id":"00-0034161","kicker_name":"D.Carlson","attempts_eff":51.0243329799,"bands":{"long":{"delta_logit":-0.0866880189,"se":0.22289956,"n_eff":14.4444256144},"mid":{"delta_logit":0.0308374772,"se":0.2153603016,"n_eff":10.3483769888},"short":{"delta_logit":0.1241614722,"se":0.3641360721,"n_eff":26.2315303766}}},{"kicker_id":"00-0034173","kicker_name":"E.Pineiro","attempts_eff":40.5318074808,"bands":{"long":{"delta_logit":0.0543174303,"se":0.2390516681,"n_eff":7.1041979145},"mid":{"delta_logit":0.0414385646,"se":0.2145674144,"n_eff":12.1479271271},"short":{"delta_logit":0.049814599,"se":0.3570780976,"n_eff":21.2796824393}}},{"kicker_id":"00-0034450","kicker_name":"G.Joseph","attempts_eff":24.6524783423,"bands":{"long":{"delta_logit":-0.0518967255,"se":0.2371561853,"n_eff":4.5042299019},"mid":{"delta_logit":-0.0453586108,"se":0.213271093,"n_eff":7.209574636},"short":{"delta_logit":0.0780620842,"se":0.3709191043,"n_eff":12.799442497},"xlong":{"delta_logit":0.0170639108,"se":0.4424486834,"n_eff":0.1392313074}}},{"kicker_id":"00-0034648","kicker_name":"R.Santoso","attempts_eff":0.2988570699,"bands":{"mid":{"delta_logit":-0.0025049307,"se":0.2221610467,"n_eff":0.0638378359},"short":{"delta_logit":0.0016481232,"se":0.3729221825,"n_eff":0.235019234}}},{"kicker_id":"00-0034794","kicker_name":"J.Sanders","attempts_eff":36.6327496695,"bands":{"long":{"delta_logit":0.0407877469,"se":0.2336986953,"n_eff":10.6261807544},"mid":{"delta_logit":0.001782964,"se":0.2149981448,"n_eff":8.584436113},"short":{"delta_logit":0.0805778106,"se":0.3662109506,"n_eff":17.4221328021}}},{"kicker_id":"00-0034909","kicker_name":"T.Vizcaino","attempts_eff":0.7621814486,"bands":{"mid":{"delta_logit":0.0000832664,"se":0.2221300532,"n_eff":0.2780961118},"short":{"delta_logit":0.0033917935,"se":0.372907964,"n_eff":0.4840853368}}},{"kicker_id":"00-0034913","kicker_name":"C.Blewitt","attempts_eff":0.3090363404,"bands":{"long":{"delta_logit":0.0010846305,"se":0.246299661,"n_eff":0.0621400265},"mid":{"delta_logit":-0.0066167326,"se":0.2217313398,"n_eff":0.2468963139}}},{"kicker_id":"00-0034921","kicker_name":"E.Fry","attempts_eff":0.3772343678,"bands":{"mid":{"delta_logit":0.0007317985,"se":0.2223631145,"n_eff":0.069214697},"short":{"delta_logit":-0.0074880863,"se":0.3713034459,"n_eff":0.3080196708}}},{"kicker_id":"00-0034941","kicker_name":"M.Wishnowsky","attempts_eff":0.547458654,"bands":{"mid":{"delta_logit":-0.0023105628,"se":0.2221780117,"n_eff":0.0588786698},"short":{"delta_logit":0.0034232319,"se":0.3729077079,"n_eff":0.4885799842}}},{"kicker_id":"00-0035042","kicker_name":"J.Gillan","attempts_eff":0.3117342071,"bands":{"mid":{"delta_logit":0.0029296132,"se":0.2223129544,"n_eff":0.277392368},"xlong":{"delta_logit":-0.0028792928,"se":0.4443808949,"n_eff":0.0343418391}}},{"kicker_id":"00-0035145","kicker_name":"A.Seibert","attempts_eff":16.711122664,"bands":{"long":{"delta_logit":-0.0551889489,"se":0.2393366724,"n_eff":2.8402476245},"mid":{"delta_logit":0.0373418761,"se":0.2205045995,"n_eff":4.7705802627},"short":{"delta_logit":0.0619135825,"se":0.3724445842,"n_eff":9.1002947768}}},{"kicker_id":"00-0035189","kicker_name":"M.Wright","attempts_eff":14.0324823621,"bands":{"long":{"delta_logit":-0.0229056008,"se":0.2421538168,"n_eff":2.0067949197},"mid":{"delta_logit":0.0255475268,"se":0.2204655726,"n_eff":3.9482491804},"short":{"delta_logit":0.0373217669,"se":0.3695082238,"n_eff":8.077438262}}},{"kicker_id":"00-0035192","kicker_name":"J.Slye","attempts_eff":45.9054236909,"bands":{"long":{"delta_logit":0.059635401,"se":0.2346324132,"n_eff":10.6755706882},"mid":{"delta_logit":-0.049581055,"se":0.2085731176,"n_eff":12.733870204},"short":{"delta_logit":-0.0595870274,"se":0.3419706429,"n_eff":19.2386001151},"xlong":{"delta_logit":-0.1052348895,"se":0.4184251987,"n_eff":3.2573826836}}},{"kicker_id":"00-0035269","kicker_name":"M.Gay","attempts_eff":51.3058828074,"bands":{"long":{"delta_logit":-0.1422039208,"se":0.2186988823,"n_eff":16.0560219214},"mid":{"delta_logit":0.0837303839,"se":0.2176693046,"n_eff":11.684461932},"short":{"delta_logit":-0.0124356289,"se":0.3452975645,"n_eff":23.1813523399},"xlong":{"delta_logit":-0.0317367055,"se":0.4420016731,"n_eff":0.3840466142}}},{"kicker_id":"00-0035358","kicker_name":"C.McLaughlin","attempts_eff":49.8725810025,"bands":{"long":{"delta_logit":0.092925051,"se":0.2334854221,"n_eff":13.0134053968},"mid":{"delta_logit":-0.060700463,"se":0.2089436116,"n_eff":11.4371373148},"short":{"delta_logit":0.0181575526,"se":0.3488484724,"n_eff":24.4175253766},"xlong":{"delta_logit":0.1106443189,"se":0.4304271356,"n_eff":1.0045129143}}},{"kicker_id":"00-0035758","kicker_name":"L.Hajrullahu","attempts_eff":0.349842953,"bands":{"mid":{"delta_logit":-0.0027524249,"se":0.2221394475,"n_eff":0.070153878},"short":{"delta_logit":0.0019610731,"se":0.3729196288,"n_eff":0.2796890749}}},{"kicker_id":"00-0035849","kicker_name":"R.Blankenship","attempts_eff":2.6252309239,"bands":{"long":{"delta_logit":-0.0027485581,"se":0.2457635477,"n_eff":0.2817367488},"mid":{"delta_logit":-0.0021327763,"se":0.2214070635,"n_eff":0.915873485},"short":{"delta_logit":-0.0071189427,"se":0.369998688,"n_eff":1.4276206901}}},{"kicker_id":"00-0036162","kicker_name":"T.Bass","attempts_eff":35.0234823768,"bands":{"long":{"delta_logit":0.0406049648,"se":0.2409827582,"n_eff":5.1637638292},"mid":{"delta_logit":-0.0556291608,"se":0.2102663781,"n_eff":10.1453528625},"short":{"delta_logit":-0.0683010706,"se":0.3407131629,"n_eff":19.1674726984},"xlong":{"delta_logit":0.0591691289,"se":0.4366539413,"n_eff":0.5468929867}}},{"kicker_id":"00-0036168","kicker_name":"D.Eberle","attempts_eff":0.3263118562,"bands":{"long":{"delta_logit":-0.001831126,"se":0.2460290758,"n_eff":0.1384293941},"mid":{"delta_logit":0.0012543318,"se":0.2223511799,"n_eff":0.1186677651},"short":{"delta_logit":0.0004856653,"se":0.3729316751,"n_eff":0.069214697}}},{"kicker_id":"00-0036436","kicker_name":"S.Sloman","attempts_eff":0.3896544574,"bands":{"long":{"delta_logit":-0.0012666925,"se":0.2462253597,"n_eff":0.028822381},"mid":{"delta_logit":-0.0005113445,"se":0.2222596022,"n_eff":0.0952969922},"short":{"delta_logit":-0.0020588329,"se":0.3722632548,"n_eff":0.2655350842}}},{"kicker_id":"00-0036459","kicker_name":"T.Russolino","attempts_eff":0.0338169156,"bands":{"long":{"delta_logit":-0.0014860304,"se":0.2462061351,"n_eff":0.0338169156}}},{"kicker_id":"00-0036469","kicker_name":"M.Ammendola","attempts_eff":4.3840365049,"bands":{"long":{"delta_logit":-0.0310421254,"se":0.2436403153,"n_eff":0.7169570877},"mid":{"delta_logit":-0.0182870729,"se":0.2203482071,"n_eff":0.9575363846},"short":{"delta_logit":0.0025813099,"se":0.3700635817,"n_eff":2.7095430325}}},{"kicker_id":"00-0036515","kicker_name":"C.Naggar","attempts_eff":0.0690815587,"bands":{"short":{"delta_logit":0.0004847313,"se":0.3729316827,"n_eff":0.0690815587}}},{"kicker_id":"00-0036703","kicker_name":"B.Johnson","attempts_eff":0.634100395,"bands":{"long":{"delta_logit":0.0010993399,"se":0.2462991625,"n_eff":0.0629832106},"mid":{"delta_logit":0.0007028096,"se":0.2223637768,"n_eff":0.0664719224},"short":{"delta_logit":0.0035355943,"se":0.3729067925,"n_eff":0.504645262}}},{"kicker_id":"00-0036816","kicker_name":"R.Patterson","attempts_eff":22.2703558496,"bands":{"long":{"delta_logit":-0.0895993775,"se":0.2365134047,"n_eff":3.6755592217},"mid":{"delta_logit":0.0364322843,"se":0.2175246435,"n_eff":8.1710435752},"short":{"delta_logit":0.0205674196,"se":0.3640502915,"n_eff":10.4237530527}}},{"kicker_id":"00-0036854","kicker_name":"E.McPherson","attempts_eff":34.2095315721,"bands":{"long":{"delta_logit":-0.0845740388,"se":0.2284255802,"n_eff":9.9584624278},"mid":{"delta_logit":0.007751585,"se":0.2151880974,"n_eff":8.802307293},"short":{"delta_logit":0.0808331932,"se":0.3695276409,"n_eff":14.4506854077},"xlong":{"delta_logit":-0.080474711,"se":0.4381091174,"n_eff":0.9980764436}}},{"kicker_id":"00-0037224","kicker_name":"C.Dicker","attempts_eff":49.0420811904,"bands":{"long":{"delta_logit":0.0522397226,"se":0.2359498089,"n_eff":9.3508406155},"mid":{"delta_logit":0.0851719119,"se":0.2177197819,"n_eff":11.7383382273},"short":{"delta_logit":0.179139331,"se":0.3715927222,"n_eff":27.9529023476}}},{"kicker_id":"00-0037542","kicker_name":"J.Romo","attempts_eff":16.9964516178,"bands":{"long":{"delta_logit":-0.0156010249,"se":0.2418861707,"n_eff":2.4484240606},"mid":{"delta_logit":-0.0350477641,"se":0.2169345906,"n_eff":3.6362265632},"short":{"delta_logit":-0.0576069736,"se":0.3509643344,"n_eff":10.9118009941}}},{"kicker_id":"00-0037606","kicker_name":"C.Shudak","attempts_eff":0.5287125787,"bands":{"short":{"delta_logit":-0.0146464097,"se":0.3698414353,"n_eff":0.5287125787}}},{"kicker_id":"00-0037645","kicker_name":"N.Sciba","attempts_eff":0.2504818159,"bands":{"short":{"delta_logit":0.0017564627,"se":0.3729212983,"n_eff":0.2504818159}}},{"kicker_id":"00-0037692","kicker_name":"B.Aubrey","attempts_eff":45.4764283748,"bands":{"long":{"delta_logit":0.1601348336,"se":0.2387891642,"n_eff":11.8400318227},"mid":{"delta_logit":0.0703803245,"se":0.2163642721,"n_eff":12.2168119128},"short":{"delta_logit":-0.0801246432,"se":0.3394158161,"n_eff":18.6710145773},"xlong":{"delta_logit":0.1909384779,"se":0.4123722963,"n_eff":2.748570062}}},{"kicker_id":"00-0038097","kicker_name":"C.York","attempts_eff":11.2348729647,"bands":{"long":{"delta_logit":-0.0123439139,"se":0.2430455621,"n_eff":1.7688935063},"mid":{"delta_logit":-0.0351535149,"se":0.2178023251,"n_eff":2.6377183796},"short":{"delta_logit":-0.0822705011,"se":0.3517208207,"n_eff":6.7046968263},"xlong":{"delta_logit":-0.0103213695,"se":0.4437619298,"n_eff":0.1235642525}}},{"kicker_id":"00-0038152","kicker_name":"L.Havrisik","attempts_eff":7.3897168125,"bands":{"long":{"delta_logit":-0.002442013,"se":0.2450060344,"n_eff":0.7959223921},"mid":{"delta_logit":-0.0257066446,"se":0.2184153047,"n_eff":2.6032975282},"short":{"delta_logit":0.0276222641,"se":0.372712875,"n_eff":3.9904968922}}},{"kicker_id":"00-0038402","kicker_name":"A.Carlson","attempts_eff":17.589294381,"bands":{"long":{"delta_logit":0.0277055705,"se":0.2440185687,"n_eff":2.5518763316},"mid":{"delta_logit":-0.0543404955,"se":0.2135382035,"n_eff":6.2486546409},"short":{"delta_logit":0.0581037637,"se":0.3724739481,"n_eff":8.5238976348},"xlong":{"delta_logit":-0.0219952321,"se":0.4427985585,"n_eff":0.2648657736}}},{"kicker_id":"00-0038428","kicker_name":"A.Szmyt","attempts_eff":10.6508185834,"bands":{"long":{"delta_logit":-0.0082372372,"se":0.2415730841,"n_eff":2.9281339982},"mid":{"delta_logit":0.0098200781,"se":0.2221563353,"n_eff":0.9330329915},"short":{"delta_logit":-0.0766859563,"se":0.3525029108,"n_eff":6.7896515936}}},{"kicker_id":"00-0038562","kicker_name":"J.Moody","attempts_eff":34.10111473,"bands":{"long":{"delta_logit":-0.0628468332,"se":0.234045268,"n_eff":6.4011387411},"mid":{"delta_logit":-0.0989572997,"se":0.2061895283,"n_eff":12.1747710046},"short":{"delta_logit":-0.162293661,"se":0.3303391582,"n_eff":15.5252049844}}},{"kicker_id":"00-0038567","kicker_name":"C.Ryland","attempts_eff":35.0219621909,"bands":{"long":{"delta_logit":0.0159584297,"se":0.2384848651,"n_eff":6.0229444027},"mid":{"delta_logit":-0.0687976069,"se":0.2070514498,"n_eff":13.265421833},"short":{"delta_logit":0.0338366531,"se":0.3603573727,"n_eff":15.7335959551}}},{"kicker_id":"00-0038905","kicker_name":"B.Grupe","attempts_eff":43.991551175,"bands":{"long":{"delta_logit":-0.009790643,"se":0.2308916504,"n_eff":10.8120251139},"mid":{"delta_logit":-0.0409966555,"se":0.2115826836,"n_eff":9.583191034},"short":{"delta_logit":-0.0977083501,"se":0.3325091992,"n_eff":23.044745616},"xlong":{"delta_logit":-0.0452726245,"se":0.4409049055,"n_eff":0.5515894111}}},{"kicker_id":"00-0039172","kicker_name":"J.Bates","attempts_eff":24.4220659874,"bands":{"long":{"delta_logit":0.0061811577,"se":0.2384578119,"n_eff":5.6724259429},"mid":{"delta_logit":0.0372191958,"se":0.2192435297,"n_eff":6.2124056204},"short":{"delta_logit":0.0744347787,"se":0.3723488476,"n_eff":11.0102013679},"xlong":{"delta_logit":-0.1206360226,"se":0.435017165,"n_eff":1.5270330562}}},{"kicker_id":"00-0039404","kicker_name":"W.Reichard","attempts_eff":25.0436896267,"bands":{"long":{"delta_logit":-0.008979479,"se":0.2335365096,"n_eff":8.7753523909},"mid":{"delta_logit":-0.0060102139,"se":0.2177917525,"n_eff":4.7167203313},"short":{"delta_logit":0.002013129,"se":0.3608314079,"n_eff":10.593091291},"xlong":{"delta_logit":0.1119733035,"se":0.4308384347,"n_eff":0.9585256135}}},{"kicker_id":"00-0039409","kicker_name":"C.Little","attempts_eff":27.6064779142,"bands":{"long":{"delta_logit":-0.0042283345,"se":0.2386179073,"n_eff":5.1678872476},"mid":{"delta_logit":-0.0179382666,"se":0.2130580408,"n_eff":9.4722426456},"short":{"delta_logit":0.0870986408,"se":0.3722532092,"n_eff":12.9663480209}}},{"kicker_id":"00-0039576","kicker_name":"S.Shrader","attempts_eff":15.9352778978,"bands":{"long":{"delta_logit":-0.0244634006,"se":0.2421862413,"n_eff":1.9300575547},"mid":{"delta_logit":0.0306043746,"se":0.221689745,"n_eff":2.9382857219},"short":{"delta_logit":0.0748043303,"se":0.3723460398,"n_eff":11.0669346213}}},{"kicker_id":"00-0039649","kicker_name":"B.Narveson","attempts_eff":8.6532131232,"bands":{"long":{"delta_logit":-0.0246140591,"se":0.2441941874,"n_eff":0.5666601111},"mid":{"delta_logit":-0.0472266372,"se":0.2156155426,"n_eff":4.3054392482},"short":{"delta_logit":-0.039244688,"se":0.3619195235,"n_eff":3.7811137639}}},{"kicker_id":"00-0039750","kicker_name":"J.Karty","attempts_eff":33.7998918618,"bands":{"long":{"delta_logit":0.0072061911,"se":0.2384343488,"n_eff":5.7280786986},"mid":{"delta_logit":-0.0176012986,"se":0.2146696572,"n_eff":7.5452545164},"short":{"delta_logit":-0.2185331737,"se":0.3175324002,"n_eff":20.5265586469}}},{"kicker_id":"00-0039934","kicker_name":"J.McAtamney","attempts_eff":2.458706869,"bands":{"short":{"delta_logit":0.0171092289,"se":0.3727969508,"n_eff":2.458706869}}},{"kicker_id":"00-0040074","kicker_name":"T.Loop","attempts_eff":9.6283955745,"bands":{"long":{"delta_logit":-0.0262292534,"se":0.2421141746,"n_eff":1.9177477445},"mid":{"delta_logit":0.0395130555,"se":0.2214924086,"n_eff":3.8106312851},"short":{"delta_logit":0.0270043381,"se":0.3727177928,"n_eff":3.900016545}}},{"kicker_id":"00-0040200","kicker_name":"A.Borregales","attempts_eff":8.6427064916,"bands":{"long":{"delta_logit":0.0331569991,"se":0.2452276536,"n_eff":1.9304081602},"mid":{"delta_logit":-0.0261811722,"se":0.2190401302,"n_eff":1.8660659831},"short":{"delta_logit":0.0334476132,"se":0.3726666597,"n_eff":4.8462323483}}},{"kicker_id":"00-0040279","kicker_name":"R.Fitzgerald","attempts_eff":10.6894940171,"bands":{"long":{"delta_logit":-0.0082372372,"se":0.2415730841,"n_eff":2.9281339982},"mid":{"delta_logit":0.0299680522,"se":0.2217039008,"n_eff":2.876273358},"short":{"delta_logit":0.0337113071,"se":0.3726645739,"n_eff":4.8850866609}}}]
+[
+  {
+    "kicker_id": "00-0023252",
+    "kicker_name": "R.Gould",
+    "attempts_eff": 39.58055651431184,
+    "bands": {
+      "long": {
+        "delta_logit": 0.009128160321767553,
+        "se": 0.23987584640080328,
+        "n_eff": 0.8937751247064918
+      },
+      "mid": {
+        "delta_logit": -0.0028964218330129743,
+        "se": 0.2152831586779568,
+        "n_eff": 2.775003998869087
+      },
+      "short": {
+        "delta_logit": 0.01679007929625609,
+        "se": 0.30096180556427976,
+        "n_eff": 4.285624246628352
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0033862",
+    "kicker_name": "Z.Gonzalez",
+    "attempts_eff": 53.11529746692949,
+    "bands": {
+      "long": {
+        "delta_logit": -0.01270873010308704,
+        "se": 0.23796478381636732,
+        "n_eff": 1.5193298851731125
+      },
+      "mid": {
+        "delta_logit": 0.003543928096351401,
+        "se": 0.21280645401383166,
+        "n_eff": 6.12340706359209
+      },
+      "short": {
+        "delta_logit": 0.021244460499565854,
+        "se": 0.3028162690102724,
+        "n_eff": 2.9687933570514264
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0023853",
+    "kicker_name": "M.Prater",
+    "attempts_eff": 142.21819708137923,
+    "bands": {
+      "long": {
+        "delta_logit": 0.0397396096659981,
+        "se": 0.23419314513257306,
+        "n_eff": 5.962099080773849
+      },
+      "mid": {
+        "delta_logit": 0.0427431731337824,
+        "se": 0.21386246629043656,
+        "n_eff": 7.660675958724417
+      },
+      "short": {
+        "delta_logit": -0.01740679288205893,
+        "se": 0.28747148573080367,
+        "n_eff": 14.362653757819691
+      },
+      "xlong": {
+        "delta_logit": 0.01743872149248522,
+        "se": 0.4322277573129498,
+        "n_eff": 0.41104936615346077
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0031203",
+    "kicker_name": "C.Santos",
+    "attempts_eff": 177.46048704660274,
+    "bands": {
+      "long": {
+        "delta_logit": 0.06464552992661965,
+        "se": 0.2298124720364929,
+        "n_eff": 10.22886463912794
+      },
+      "mid": {
+        "delta_logit": 0.011101432983059212,
+        "se": 0.20869219149214746,
+        "n_eff": 11.739516820451385
+      },
+      "short": {
+        "delta_logit": 0.09251627816979457,
+        "se": 0.3020788397413597,
+        "n_eff": 13.402184787254752
+      },
+      "xlong": {
+        "delta_logit": -0.00625337935342485,
+        "se": 0.4357995685357704,
+        "n_eff": 0.06310459582678192
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0029597",
+    "kicker_name": "J.Tucker",
+    "attempts_eff": 180.39159242176447,
+    "bands": {
+      "long": {
+        "delta_logit": -0.049071455068167236,
+        "se": 0.22625665629149444,
+        "n_eff": 9.055307890343325
+      },
+      "mid": {
+        "delta_logit": 0.006912051679995201,
+        "se": 0.20962029520095138,
+        "n_eff": 10.261511624869932
+      },
+      "short": {
+        "delta_logit": 0.10762328970977908,
+        "se": 0.3015064718457243,
+        "n_eff": 16.17835235794902
+      },
+      "xlong": {
+        "delta_logit": -0.04478760004323325,
+        "se": 0.4307004579206787,
+        "n_eff": 0.5803666065202729
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0035145",
+    "kicker_name": "A.Seibert",
+    "attempts_eff": 83.5033549556411,
+    "bands": {
+      "long": {
+        "delta_logit": -0.049132775551993135,
+        "se": 0.23449031081131724,
+        "n_eff": 2.840247624541814
+      },
+      "mid": {
+        "delta_logit": 0.038580829246895654,
+        "se": 0.21605140647376864,
+        "n_eff": 4.770580262697164
+      },
+      "short": {
+        "delta_logit": 0.0637422750292016,
+        "se": 0.3023704538493422,
+        "n_eff": 9.100294776805313
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0036436",
+    "kicker_name": "S.Sloman",
+    "attempts_eff": 1.9516818518832697,
+    "bands": {
+      "long": {
+        "delta_logit": -0.0011707391292796743,
+        "se": 0.2406731632850527,
+        "n_eff": 0.02882238104956061
+      },
+      "mid": {
+        "delta_logit": -0.00043500059072543173,
+        "se": 0.21779966093863345,
+        "n_eff": 0.0952969921971021
+      },
+      "short": {
+        "delta_logit": -0.0006718818105015956,
+        "se": 0.30269419686978033,
+        "n_eff": 0.26553508415135296
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0029621",
+    "kicker_name": "G.Zuerlein",
+    "attempts_eff": 127.82079011517217,
+    "bands": {
+      "long": {
+        "delta_logit": -0.026575816544399333,
+        "se": 0.23398532899239272,
+        "n_eff": 3.905624969592876
+      },
+      "mid": {
+        "delta_logit": -0.016707700142530202,
+        "se": 0.21007440340122813,
+        "n_eff": 8.009315735044455
+      },
+      "short": {
+        "delta_logit": -0.02432781196532874,
+        "se": 0.2874775958649928,
+        "n_eff": 13.39652416991609
+      },
+      "xlong": {
+        "delta_logit": 0.004470902465534399,
+        "se": 0.4341288648991391,
+        "n_eff": 0.2240735760448002
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0025580",
+    "kicker_name": "M.Crosby",
+    "attempts_eff": 43.57487260202379,
+    "bands": {
+      "long": {
+        "delta_logit": -0.01659411981872927,
+        "se": 0.23785662477306704,
+        "n_eff": 1.4729772082629038
+      },
+      "mid": {
+        "delta_logit": -0.011778448871281544,
+        "se": 0.21557748195441534,
+        "n_eff": 1.8371987284418063
+      },
+      "short": {
+        "delta_logit": 0.009117898182656514,
+        "se": 0.29890547736393586,
+        "n_eff": 5.411770497917103
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0028660",
+    "kicker_name": "D.Bailey",
+    "attempts_eff": 3.485479279122293,
+    "bands": {
+      "long": {
+        "delta_logit": -0.0027575675935336275,
+        "se": 0.2404086209018027,
+        "n_eff": 0.15777226058130472
+      },
+      "mid": {
+        "delta_logit": -0.0022757048771924193,
+        "se": 0.21757710562103677,
+        "n_eff": 0.2202070110255624
+      },
+      "short": {
+        "delta_logit": -0.0007816323283895699,
+        "se": 0.3026267485255546,
+        "n_eff": 0.3189618239695136
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0032726",
+    "kicker_name": "K.Fairbairn",
+    "attempts_eff": 261.5948252641579,
+    "bands": {
+      "long": {
+        "delta_logit": 0.05824477778598003,
+        "se": 0.21985822224378737,
+        "n_eff": 18.415075255537438
+      },
+      "mid": {
+        "delta_logit": 0.042001402532732435,
+        "se": 0.21264956302392932,
+        "n_eff": 9.077959320967187
+      },
+      "short": {
+        "delta_logit": 0.012645213158517521,
+        "se": 0.2824821702475536,
+        "n_eff": 24.650624054613388
+      },
+      "xlong": {
+        "delta_logit": 0.006755026411224341,
+        "se": 0.43573882753313176,
+        "n_eff": 0.06737388644017844
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0033303",
+    "kicker_name": "H.Butker",
+    "attempts_eff": 240.9871511690954,
+    "bands": {
+      "long": {
+        "delta_logit": -0.027792051113971428,
+        "se": 0.22552179548800658,
+        "n_eff": 10.356515564846049
+      },
+      "mid": {
+        "delta_logit": 0.01925508391930908,
+        "se": 0.2121976316773292,
+        "n_eff": 7.973971969902124
+      },
+      "short": {
+        "delta_logit": 0.08014834191020892,
+        "se": 0.28707227015523107,
+        "n_eff": 29.123472737477616
+      },
+      "xlong": {
+        "delta_logit": -0.010627140662739657,
+        "se": 0.4279070588918985,
+        "n_eff": 0.8482391833178815
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0035849",
+    "kicker_name": "R.Blankenship",
+    "attempts_eff": 13.124746673624857,
+    "bands": {
+      "long": {
+        "delta_logit": -0.0022422004616762248,
+        "se": 0.24024898531616987,
+        "n_eff": 0.28173674876812366
+      },
+      "mid": {
+        "delta_logit": -0.0015138020019287435,
+        "se": 0.21700096454002893,
+        "n_eff": 0.9158734849916431
+      },
+      "short": {
+        "delta_logit": -0.0010412559982859726,
+        "se": 0.3014911752321255,
+        "n_eff": 1.4276206901013941
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0032087",
+    "kicker_name": "J.Lambo",
+    "attempts_eff": 1.5953142206977053,
+    "bands": {
+      "long": {
+        "delta_logit": -0.0035468353409695563,
+        "se": 0.24034944525646493,
+        "n_eff": 0.17316406502312942
+      },
+      "mid": {
+        "delta_logit": -0.001824757815602318,
+        "se": 0.2177252396763489,
+        "n_eff": 0.08536858348358474
+      },
+      "short": {
+        "delta_logit": 0.000431588276640138,
+        "se": 0.3030413691752621,
+        "n_eff": 0.05968652309087834
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0034084",
+    "kicker_name": "M.Badgley",
+    "attempts_eff": 46.07840425398627,
+    "bands": {
+      "long": {
+        "delta_logit": -0.00245532078440569,
+        "se": 0.239273857296148,
+        "n_eff": 0.9388880184223418
+      },
+      "mid": {
+        "delta_logit": 0.013671482810828639,
+        "se": 0.21537361078326198,
+        "n_eff": 3.809512336901923
+      },
+      "short": {
+        "delta_logit": 0.013624848839925985,
+        "se": 0.3003923486721098,
+        "n_eff": 4.458234301089635
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0029421",
+    "kicker_name": "R.Bullock",
+    "attempts_eff": 34.97454341267292,
+    "bands": {
+      "long": {
+        "delta_logit": 0.0020659102209014124,
+        "se": 0.2397224980924955,
+        "n_eff": 0.7746241302449605
+      },
+      "mid": {
+        "delta_logit": -0.010477072995988657,
+        "se": 0.21477263200671345,
+        "n_eff": 2.8477587586331357
+      },
+      "short": {
+        "delta_logit": 0.01843435197290244,
+        "se": 0.302078099298748,
+        "n_eff": 3.3546466822542387
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0035192",
+    "kicker_name": "J.Slye",
+    "attempts_eff": 228.70677513168297,
+    "bands": {
+      "long": {
+        "delta_logit": 0.07007828463577259,
+        "se": 0.22950934484991894,
+        "n_eff": 10.675570688181335
+      },
+      "mid": {
+        "delta_logit": -0.041051121325634155,
+        "se": 0.20497590026397242,
+        "n_eff": 12.733870203969028
+      },
+      "short": {
+        "delta_logit": 0.0038901661961654455,
+        "se": 0.2858781323919261,
+        "n_eff": 19.238600115117244
+      },
+      "xlong": {
+        "delta_logit": -0.15249331870158309,
+        "se": 0.40745008615782924,
+        "n_eff": 3.257382683618557
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0034161",
+    "kicker_name": "D.Carlson",
+    "attempts_eff": 255.51105735781258,
+    "bands": {
+      "long": {
+        "delta_logit": -0.06675489890971209,
+        "se": 0.2190779038044722,
+        "n_eff": 14.444425614415572
+      },
+      "mid": {
+        "delta_logit": 0.03529635315287938,
+        "se": 0.21121855501395037,
+        "n_eff": 10.34837698879995
+      },
+      "short": {
+        "delta_logit": 0.14403047707465122,
+        "se": 0.29745477393812186,
+        "n_eff": 26.23153037664343
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0034794",
+    "kicker_name": "J.Sanders",
+    "attempts_eff": 183.24645338057363,
+    "bands": {
+      "long": {
+        "delta_logit": 0.051980982522598085,
+        "se": 0.22871989765832015,
+        "n_eff": 10.626180754403425
+      },
+      "mid": {
+        "delta_logit": 0.006435864456908691,
+        "se": 0.21094457992851204,
+        "n_eff": 8.584436113012252
+      },
+      "short": {
+        "delta_logit": 0.09564858005882826,
+        "se": 0.2988526661836032,
+        "n_eff": 17.42213280208555
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0025565",
+    "kicker_name": "N.Folk",
+    "attempts_eff": 192.94076710808687,
+    "bands": {
+      "long": {
+        "delta_logit": 0.14278661940690096,
+        "se": 0.23318046186004085,
+        "n_eff": 10.627062162017372
+      },
+      "mid": {
+        "delta_logit": 0.0721179459242478,
+        "se": 0.2121244593847473,
+        "n_eff": 11.989182051017298
+      },
+      "short": {
+        "delta_logit": 0.10901887965988344,
+        "se": 0.30191521966232526,
+        "n_eff": 15.925857684847301
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0033138",
+    "kicker_name": "S.Ficken",
+    "attempts_eff": 2.3000679040900924,
+    "bands": {
+      "long": {
+        "delta_logit": -0.0020879095449128915,
+        "se": 0.24053493539896342,
+        "n_eff": 0.09339871113266143
+      },
+      "mid": {
+        "delta_logit": 0.0003054840125860103,
+        "se": 0.21790427659507774,
+        "n_eff": 0.02843652309087834
+      },
+      "short": {
+        "delta_logit": 0.0024435509297888736,
+        "se": 0.3030194109571378,
+        "n_eff": 0.33827120736647687
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0036162",
+    "kicker_name": "T.Bass",
+    "attempts_eff": 175.3026771726428,
+    "bands": {
+      "long": {
+        "delta_logit": 0.04548797608489952,
+        "se": 0.23554818094674254,
+        "n_eff": 5.163763829165453
+      },
+      "mid": {
+        "delta_logit": -0.04813026800236164,
+        "se": 0.20659693806675414,
+        "n_eff": 10.145352862469256
+      },
+      "short": {
+        "delta_logit": -0.0023526544934138194,
+        "se": 0.2851858834887534,
+        "n_eff": 19.167472698419996
+      },
+      "xlong": {
+        "delta_logit": 0.0474719969469716,
+        "se": 0.43092943158250413,
+        "n_eff": 0.5468929867014977
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0033787",
+    "kicker_name": "J.Elliott",
+    "attempts_eff": 231.320795446496,
+    "bands": {
+      "long": {
+        "delta_logit": -0.03050539783035844,
+        "se": 0.22567681770228765,
+        "n_eff": 10.138910910672125
+      },
+      "mid": {
+        "delta_logit": 0.07289323531161407,
+        "se": 0.21300634260140008,
+        "n_eff": 10.94917010020946
+      },
+      "short": {
+        "delta_logit": 0.07229700426278463,
+        "se": 0.2899127831088309,
+        "n_eff": 24.430655746121072
+      },
+      "xlong": {
+        "delta_logit": -0.02317353079719943,
+        "se": 0.42933522597826135,
+        "n_eff": 0.7070545548156331
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0030098",
+    "kicker_name": "D.Hopkins",
+    "attempts_eff": 136.73664554983048,
+    "bands": {
+      "long": {
+        "delta_logit": -0.01737752441297813,
+        "se": 0.23109361087019623,
+        "n_eff": 6.344953813443796
+      },
+      "mid": {
+        "delta_logit": -0.027520928904573694,
+        "se": 0.20870721436172507,
+        "n_eff": 8.93921883626341
+      },
+      "short": {
+        "delta_logit": -0.014764746890935765,
+        "se": 0.2898572316989463,
+        "n_eff": 12.013628807292278
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0026858",
+    "kicker_name": "G.Gano",
+    "attempts_eff": 114.60433609943891,
+    "bands": {
+      "long": {
+        "delta_logit": 0.050619091797599935,
+        "se": 0.2361746215184612,
+        "n_eff": 4.8856455522694535
+      },
+      "mid": {
+        "delta_logit": 3.761082098208135e-05,
+        "se": 0.21260866181981378,
+        "n_eff": 6.1138551237980785
+      },
+      "short": {
+        "delta_logit": -0.023749352355622477,
+        "se": 0.2888627623162807,
+        "n_eff": 11.902802000865513
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0031136",
+    "kicker_name": "C.Boswell",
+    "attempts_eff": 241.59860632853756,
+    "bands": {
+      "long": {
+        "delta_logit": 0.11607887700576403,
+        "se": 0.22843930333116363,
+        "n_eff": 13.358085774812015
+      },
+      "mid": {
+        "delta_logit": 0.0626708637643949,
+        "se": 0.2102628765659245,
+        "n_eff": 13.622187662446455
+      },
+      "short": {
+        "delta_logit": 0.030981813049375084,
+        "se": 0.28884809169350567,
+        "n_eff": 19.622016863867728
+      },
+      "xlong": {
+        "delta_logit": 0.019847342138260234,
+        "se": 0.420139473912644,
+        "n_eff": 1.6610372515877456
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0033702",
+    "kicker_name": "Y.Koo",
+    "attempts_eff": 186.96067402175296,
+    "bands": {
+      "long": {
+        "delta_logit": -0.019128506310429838,
+        "se": 0.22899908717316086,
+        "n_eff": 7.891338042155984
+      },
+      "mid": {
+        "delta_logit": -0.04114225365150004,
+        "se": 0.20523898820508352,
+        "n_eff": 12.384708755816469
+      },
+      "short": {
+        "delta_logit": 0.01940986695462632,
+        "se": 0.2896355253499062,
+        "n_eff": 17.040145724746235
+      },
+      "xlong": {
+        "delta_logit": -0.011265139845504946,
+        "se": 0.43528565577958145,
+        "n_eff": 0.1139653110697771
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0031492",
+    "kicker_name": "J.Myers",
+    "attempts_eff": 235.35422872513294,
+    "bands": {
+      "long": {
+        "delta_logit": 0.0791771598453811,
+        "se": 0.22660693996519785,
+        "n_eff": 13.395792756590723
+      },
+      "mid": {
+        "delta_logit": 0.024896737006211866,
+        "se": 0.20838847270973807,
+        "n_eff": 13.154426849451507
+      },
+      "short": {
+        "delta_logit": 0.008048351811048349,
+        "se": 0.28621357876613474,
+        "n_eff": 19.43717101271408
+      },
+      "xlong": {
+        "delta_logit": -0.09606585812403898,
+        "se": 0.4262366184224974,
+        "n_eff": 1.0813023098797423
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0026968",
+    "kicker_name": "R.Succop",
+    "attempts_eff": 41.56021782564183,
+    "bands": {
+      "long": {
+        "delta_logit": -0.024595688844585628,
+        "se": 0.2380775196194474,
+        "n_eff": 1.0726599002301684
+      },
+      "mid": {
+        "delta_logit": 0.011588078073793362,
+        "se": 0.2162984991653014,
+        "n_eff": 2.60127431766368
+      },
+      "short": {
+        "delta_logit": 0.004510628552358842,
+        "se": 0.2990454594076898,
+        "n_eff": 4.658539638758534
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0032569",
+    "kicker_name": "W.Lutz",
+    "attempts_eff": 201.75141166812722,
+    "bands": {
+      "long": {
+        "delta_logit": 0.027357776519790877,
+        "se": 0.23145750752785102,
+        "n_eff": 7.591044514352915
+      },
+      "mid": {
+        "delta_logit": 0.0209952416823469,
+        "se": 0.21053640837879167,
+        "n_eff": 10.144643326100972
+      },
+      "short": {
+        "delta_logit": 0.05431052641572576,
+        "se": 0.289876268950195,
+        "n_eff": 21.804974981702685
+      },
+      "xlong": {
+        "delta_logit": -0.04993278248616637,
+        "se": 0.42895197053386014,
+        "n_eff": 0.7599753269788642
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0024333",
+    "kicker_name": "S.Gostkowski",
+    "attempts_eff": 4.283932388957084,
+    "bands": {
+      "long": {
+        "delta_logit": 0.0025358191831758026,
+        "se": 0.24053020294755792,
+        "n_eff": 0.24107429474601644
+      },
+      "mid": {
+        "delta_logit": -0.0033584925154228618,
+        "se": 0.21740673811292288,
+        "n_eff": 0.3379539439280592
+      },
+      "short": {
+        "delta_logit": -0.003542088052050918,
+        "se": 0.302317796796044,
+        "n_eff": 0.2758664036929519
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0029822",
+    "kicker_name": "B.McManus",
+    "attempts_eff": 191.2413029173623,
+    "bands": {
+      "long": {
+        "delta_logit": 0.029615388160395106,
+        "se": 0.23033660063755346,
+        "n_eff": 8.535581679326226
+      },
+      "mid": {
+        "delta_logit": -0.036532692683253876,
+        "se": 0.20789897340318972,
+        "n_eff": 9.315838320061038
+      },
+      "short": {
+        "delta_logit": 0.040619815299047346,
+        "se": 0.2897030170185056,
+        "n_eff": 20.009462790013263
+      },
+      "xlong": {
+        "delta_logit": -0.020707240071603294,
+        "se": 0.43286975622894913,
+        "n_eff": 0.353118339953306
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0030850",
+    "kicker_name": "C.Parkey",
+    "attempts_eff": 3.9888393338186754,
+    "bands": {
+      "mid": {
+        "delta_logit": 0.0025436811427477224,
+        "se": 0.2177225055744205,
+        "n_eff": 0.3803990498838129
+      },
+      "short": {
+        "delta_logit": -0.0029306011106426944,
+        "se": 0.302256363719664,
+        "n_eff": 0.4154041517791115
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0034921",
+    "kicker_name": "E.Fry",
+    "attempts_eff": 1.8907723706714292,
+    "bands": {
+      "mid": {
+        "delta_logit": 0.0007433874353730552,
+        "se": 0.21789388091628806,
+        "n_eff": 0.06921469703634767
+      },
+      "short": {
+        "delta_logit": -0.004155259659620381,
+        "se": 0.3022075591569295,
+        "n_eff": 0.3080196707696427
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0032870",
+    "kicker_name": "A.Rosas",
+    "attempts_eff": 3.199262084917052,
+    "bands": {
+      "long": {
+        "delta_logit": -0.005690842315137168,
+        "se": 0.2400956368548376,
+        "n_eff": 0.27811845451125206
+      },
+      "mid": {
+        "delta_logit": 0.00021758606930455393,
+        "se": 0.21778923208859785,
+        "n_eff": 0.1504630140321945
+      },
+      "short": {
+        "delta_logit": -0.0038211120556956857,
+        "se": 0.30234546127255135,
+        "n_eff": 0.21261214064339365
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0025944",
+    "kicker_name": "S.Hauschka",
+    "attempts_eff": 0.2968077924970227,
+    "bands": {
+      "mid": {
+        "delta_logit": -0.0010990131320975927,
+        "se": 0.21781891049597082,
+        "n_eff": 0.029609875244213713
+      },
+      "short": {
+        "delta_logit": -0.0025200777469978064,
+        "se": 0.302694544834561,
+        "n_eff": 0.029609875244213713
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0032835",
+    "kicker_name": "J.Brown",
+    "attempts_eff": 0.3009122472812118,
+    "bands": {
+      "short": {
+        "delta_logit": -0.002337194237000073,
+        "se": 0.3026874090489807,
+        "n_eff": 0.06002330906568776
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0031385",
+    "kicker_name": "S.Castillo",
+    "attempts_eff": 2.081297444603592,
+    "bands": {
+      "long": {
+        "delta_logit": 0.0011211578483160123,
+        "se": 0.24072984539959488,
+        "n_eff": 0.062141869421348854
+      },
+      "mid": {
+        "delta_logit": -0.002931090306632411,
+        "se": 0.21759016648089977,
+        "n_eff": 0.16194877041055666
+      },
+      "short": {
+        "delta_logit": -0.00470145251482057,
+        "se": 0.3022548359353453,
+        "n_eff": 0.19106813474011755
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0028787",
+    "kicker_name": "K.Forbath",
+    "attempts_eff": 0.46706909721591355,
+    "bands": {
+      "mid": {
+        "delta_logit": -0.0011443348428443745,
+        "se": 0.21781509229687196,
+        "n_eff": 0.030831642433077032
+      },
+      "short": {
+        "delta_logit": 0.00045196873577779684,
+        "se": 0.3030411465325886,
+        "n_eff": 0.06250567673467872
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0035358",
+    "kicker_name": "C.McLaughlin",
+    "attempts_eff": 249.56644532935073,
+    "bands": {
+      "long": {
+        "delta_logit": 0.10442986161428558,
+        "se": 0.228284120297761,
+        "n_eff": 13.013405396812095
+      },
+      "mid": {
+        "delta_logit": -0.052404868848458186,
+        "se": 0.20535262797178797,
+        "n_eff": 11.437137314785367
+      },
+      "short": {
+        "delta_logit": 0.06839237310356383,
+        "se": 0.28944100022964453,
+        "n_eff": 24.417525376573558
+      },
+      "xlong": {
+        "delta_logit": 0.08997788970876484,
+        "se": 0.4266822060040156,
+        "n_eff": 1.004512914289953
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0035269",
+    "kicker_name": "M.Gay",
+    "attempts_eff": 256.89589198942963,
+    "bands": {
+      "long": {
+        "delta_logit": -0.1189692920323232,
+        "se": 0.2153055265530942,
+        "n_eff": 16.056021921404
+      },
+      "mid": {
+        "delta_logit": 0.08680675079454003,
+        "se": 0.2132717395426866,
+        "n_eff": 11.684461931955003
+      },
+      "short": {
+        "delta_logit": 0.04474359034700903,
+        "se": 0.28755639639294805,
+        "n_eff": 23.181352339872433
+      },
+      "xlong": {
+        "delta_logit": -0.03746582814892356,
+        "se": 0.43263097596237193,
+        "n_eff": 0.38404661416668207
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0035189",
+    "kicker_name": "M.Wright",
+    "attempts_eff": 70.27386735356173,
+    "bands": {
+      "long": {
+        "delta_logit": -0.019240316933422208,
+        "se": 0.2369722568798323,
+        "n_eff": 2.0067949197337174
+      },
+      "mid": {
+        "delta_logit": 0.026797678649722156,
+        "se": 0.21604405801323828,
+        "n_eff": 3.9482491803838573
+      },
+      "short": {
+        "delta_logit": 0.04499300391842587,
+        "se": 0.3009300772218093,
+        "n_eff": 8.07743826198373
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0023482",
+    "kicker_name": "M.Nugent",
+    "attempts_eff": 1.3583690893393543,
+    "bands": {
+      "mid": {
+        "delta_logit": 0.0007320409402642447,
+        "se": 0.21789415022702605,
+        "n_eff": 0.06815787031237638
+      },
+      "short": {
+        "delta_logit": -0.0017475729270692852,
+        "se": 0.3026196888200581,
+        "n_eff": 0.2027975881899815
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0036459",
+    "kicker_name": "T.Russolino",
+    "attempts_eff": 0.16953287353540802,
+    "bands": {
+      "long": {
+        "delta_logit": -0.0013734733569868984,
+        "se": 0.24065637008077007,
+        "n_eff": 0.033816915585611694
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0035042",
+    "kicker_name": "J.Gillan",
+    "attempts_eff": 1.5627905212437063,
+    "bands": {
+      "mid": {
+        "delta_logit": 0.0029759556580919444,
+        "se": 0.2178409435472858,
+        "n_eff": 0.2773923680169612
+      },
+      "xlong": {
+        "delta_logit": -0.00340796954529932,
+        "se": 0.43609222086207916,
+        "n_eff": 0.03434183908064536
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0034909",
+    "kicker_name": "T.Vizcaino",
+    "attempts_eff": 3.820861791263142,
+    "bands": {
+      "mid": {
+        "delta_logit": 0.00024320181843218158,
+        "se": 0.21767613817351356,
+        "n_eff": 0.27809611182967464
+      },
+      "short": {
+        "delta_logit": 0.003495021507580187,
+        "se": 0.30300795233770494,
+        "n_eff": 0.4840853367957627
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0036854",
+    "kicker_name": "E.McPherson",
+    "attempts_eff": 169.8810055525545,
+    "bands": {
+      "long": {
+        "delta_logit": -0.06922325560448617,
+        "se": 0.22431676320204988,
+        "n_eff": 9.958462427829524
+      },
+      "mid": {
+        "delta_logit": 0.012292998677200684,
+        "se": 0.21110998874972167,
+        "n_eff": 8.802307292992468
+      },
+      "short": {
+        "delta_logit": 0.08899422226255771,
+        "se": 0.30066649582856475,
+        "n_eff": 14.4506854077
+      },
+      "xlong": {
+        "delta_logit": -0.09459605309465399,
+        "se": 0.42702533492044525,
+        "n_eff": 0.9980764435756287
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0034450",
+    "kicker_name": "G.Joseph",
+    "attempts_eff": 122.72388950152609,
+    "bands": {
+      "long": {
+        "delta_logit": -0.04392614985531418,
+        "se": 0.23241808969707337,
+        "n_eff": 4.5042299019177605
+      },
+      "mid": {
+        "delta_logit": -0.039687941512095426,
+        "se": 0.2094219685187267,
+        "n_eff": 7.209574636012327
+      },
+      "short": {
+        "delta_logit": 0.08328267482122653,
+        "se": 0.3014408183691412,
+        "n_eff": 12.799442497007815
+      },
+      "xlong": {
+        "delta_logit": 0.013909645801513743,
+        "se": 0.4349963453966886,
+        "n_eff": 0.13923130739461712
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0034648",
+    "kicker_name": "R.Santoso",
+    "attempts_eff": 1.4619469002587389,
+    "bands": {
+      "mid": {
+        "delta_logit": -0.00236792988669543,
+        "se": 0.217712048698925,
+        "n_eff": 0.06383783591076816
+      },
+      "short": {
+        "delta_logit": 0.001698328302397023,
+        "se": 0.3030275392193855,
+        "n_eff": 0.23501923402820193
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0036469",
+    "kicker_name": "M.Ammendola",
+    "attempts_eff": 21.755559059423994,
+    "bands": {
+      "long": {
+        "delta_logit": -0.02872272885255489,
+        "se": 0.2384113093994895,
+        "n_eff": 0.7169570877432168
+      },
+      "mid": {
+        "delta_logit": -0.017013384547535093,
+        "se": 0.21604447094945306,
+        "n_eff": 0.9575363846138156
+      },
+      "short": {
+        "delta_logit": 0.008648670903174782,
+        "se": 0.3014616657886113,
+        "n_eff": 2.7095430324953402
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0034941",
+    "kicker_name": "M.Wishnowsky",
+    "attempts_eff": 2.7445291472757263,
+    "bands": {
+      "mid": {
+        "delta_logit": -0.0021841808172693433,
+        "se": 0.21772751797394493,
+        "n_eff": 0.05887866982398347
+      },
+      "short": {
+        "delta_logit": 0.003527415002543499,
+        "se": 0.30300759950744743,
+        "n_eff": 0.48857998421712295
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0032065",
+    "kicker_name": "B.Pinion",
+    "attempts_eff": 0.2991764898103007,
+    "bands": {
+      "xlong": {
+        "delta_logit": -0.0059147819233912585,
+        "se": 0.43583436006020265,
+        "n_eff": 0.059677600244401045
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0036703",
+    "kicker_name": "B.Johnson",
+    "attempts_eff": 3.128364238515207,
+    "bands": {
+      "long": {
+        "delta_logit": 0.0011363286262980887,
+        "se": 0.24072929983457936,
+        "n_eff": 0.06298321057607197
+      },
+      "mid": {
+        "delta_logit": 0.0007139396937785314,
+        "se": 0.2178945798684253,
+        "n_eff": 0.06647192243361023
+      },
+      "short": {
+        "delta_logit": 0.0036431909228578085,
+        "se": 0.30300633856517173,
+        "n_eff": 0.5046452620017007
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0034913",
+    "kicker_name": "C.Blewitt",
+    "attempts_eff": 1.5492784575926069,
+    "bands": {
+      "long": {
+        "delta_logit": 0.001121124616925595,
+        "se": 0.24072984659465554,
+        "n_eff": 0.06214002648859669
+      },
+      "mid": {
+        "delta_logit": -0.006210020350431389,
+        "se": 0.21731802105094944,
+        "n_eff": 0.24689631393580774
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0030332",
+    "kicker_name": "B.Maher",
+    "attempts_eff": 59.85901298372721,
+    "bands": {
+      "long": {
+        "delta_logit": -0.019718110895572072,
+        "se": 0.23558983701401656,
+        "n_eff": 2.9686969933893628
+      },
+      "mid": {
+        "delta_logit": 0.0079038804990601,
+        "se": 0.21532001399680106,
+        "n_eff": 3.4726107222494957
+      },
+      "short": {
+        "delta_logit": 0.03161070288791423,
+        "se": 0.3017987158047097,
+        "n_eff": 5.376290877765544
+      },
+      "xlong": {
+        "delta_logit": 0.013033949752073781,
+        "se": 0.4350870043121971,
+        "n_eff": 0.13040861740064516
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0036816",
+    "kicker_name": "R.Patterson",
+    "attempts_eff": 111.62879321398074,
+    "bands": {
+      "long": {
+        "delta_logit": -0.08117334236417828,
+        "se": 0.23200096550455113,
+        "n_eff": 3.6755592216845177
+      },
+      "mid": {
+        "delta_logit": 0.03954826299671543,
+        "se": 0.21324687100602932,
+        "n_eff": 8.17104357518031
+      },
+      "short": {
+        "delta_logit": 0.03942784418121503,
+        "se": 0.2980297132678469,
+        "n_eff": 10.423753052707841
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0034173",
+    "kicker_name": "E.Pineiro",
+    "attempts_eff": 202.59672578863535,
+    "bands": {
+      "long": {
+        "delta_logit": 0.06092905634838586,
+        "se": 0.23367351922911606,
+        "n_eff": 7.104197914453721
+      },
+      "mid": {
+        "delta_logit": 0.04639932525735002,
+        "se": 0.2104457038345315,
+        "n_eff": 12.147927127083843
+      },
+      "short": {
+        "delta_logit": 0.08346679439178928,
+        "se": 0.2939513290722726,
+        "n_eff": 21.27968243925086
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0036515",
+    "kicker_name": "C.Naggar",
+    "attempts_eff": 0.34632357639150047,
+    "bands": {
+      "short": {
+        "delta_logit": 0.0004995060319838984,
+        "se": 0.30304062723693315,
+        "n_eff": 0.06908155866120248
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0036168",
+    "kicker_name": "D.Eberle",
+    "attempts_eff": 1.635858780558268,
+    "bands": {
+      "long": {
+        "delta_logit": -0.0015604501281295535,
+        "se": 0.2404925402743962,
+        "n_eff": 0.13842939407269533
+      },
+      "mid": {
+        "delta_logit": 0.001274190537907005,
+        "se": 0.2178812852702428,
+        "n_eff": 0.11866776511881488
+      },
+      "short": {
+        "delta_logit": 0.000500468470933324,
+        "se": 0.30304061672353166,
+        "n_eff": 0.06921469703634767
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0035758",
+    "kicker_name": "L.Hajrullahu",
+    "attempts_eff": 1.7536747976855587,
+    "bands": {
+      "mid": {
+        "delta_logit": -0.002601905612678035,
+        "se": 0.21769235351771676,
+        "n_eff": 0.0701538780193358
+      },
+      "short": {
+        "delta_logit": 0.002020801693870755,
+        "se": 0.3030240212331101,
+        "n_eff": 0.27968907493282547
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0038097",
+    "kicker_name": "C.York",
+    "attempts_eff": 56.16590101998344,
+    "bands": {
+      "long": {
+        "delta_logit": -0.009438649762708473,
+        "se": 0.2377534948625694,
+        "n_eff": 1.7688935062666622
+      },
+      "mid": {
+        "delta_logit": -0.03229101252529176,
+        "se": 0.21368400722813827,
+        "n_eff": 2.63771837955463
+      },
+      "short": {
+        "delta_logit": -0.0390560946461842,
+        "se": 0.2917057715943994,
+        "n_eff": 6.704696826312088
+      },
+      "xlong": {
+        "delta_logit": -0.01220819817363524,
+        "se": 0.4351891739774742,
+        "n_eff": 0.12356425254411202
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0032669",
+    "kicker_name": "T.Bertolet",
+    "attempts_eff": 1.8089069396979334,
+    "bands": {
+      "short": {
+        "delta_logit": 0.002606323862353932,
+        "se": 0.3030176363444723,
+        "n_eff": 0.36083393883530446
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0037224",
+    "kicker_name": "C.Dicker",
+    "attempts_eff": 243.75219709732713,
+    "bands": {
+      "long": {
+        "delta_logit": 0.061532751294723353,
+        "se": 0.23077859999860892,
+        "n_eff": 9.350840615459857
+      },
+      "mid": {
+        "delta_logit": 0.08821823372724569,
+        "se": 0.2133158928765407,
+        "n_eff": 11.738338227295703
+      },
+      "short": {
+        "delta_logit": 0.1841272023969407,
+        "se": 0.3012027140314602,
+        "n_eff": 27.9529023476477
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0037645",
+    "kicker_name": "N.Sciba",
+    "attempts_eff": 1.2557296020685,
+    "bands": {
+      "short": {
+        "delta_logit": 0.001809965075870501,
+        "se": 0.30302632120697987,
+        "n_eff": 0.2504818159061745
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0037606",
+    "kicker_name": "C.Shudak",
+    "attempts_eff": 2.650232492167655,
+    "bands": {
+      "short": {
+        "delta_logit": -0.008336999402002832,
+        "se": 0.3014558212032456,
+        "n_eff": 0.5287125786588781
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0037692",
+    "kicker_name": "B.Aubrey",
+    "attempts_eff": 227.6249883945411,
+    "bands": {
+      "long": {
+        "delta_logit": 0.16725866685645496,
+        "se": 0.232928017156192,
+        "n_eff": 11.840031822659022
+      },
+      "mid": {
+        "delta_logit": 0.07425686696061384,
+        "se": 0.21207378928393092,
+        "n_eff": 12.216811912812869
+      },
+      "short": {
+        "delta_logit": -0.011658757816159326,
+        "se": 0.2844853494550872,
+        "n_eff": 18.67101457726756
+      },
+      "xlong": {
+        "delta_logit": 0.1422853044826637,
+        "se": 0.41127543255979704,
+        "n_eff": 2.74857006204415
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0038402",
+    "kicker_name": "A.Carlson",
+    "attempts_eff": 88.0512838152841,
+    "bands": {
+      "long": {
+        "delta_logit": 0.02986525292399833,
+        "se": 0.23845379873731218,
+        "n_eff": 2.5518763316233755
+      },
+      "mid": {
+        "delta_logit": -0.048843893737905875,
+        "se": 0.20969639665846657,
+        "n_eff": 6.248654640911212
+      },
+      "short": {
+        "delta_logit": 0.059823262016684975,
+        "se": 0.30241080332670633,
+        "n_eff": 8.523897634826616
+      },
+      "xlong": {
+        "delta_logit": -0.02598858699509657,
+        "se": 0.43378728059049365,
+        "n_eff": 0.2648657735898238
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0038562",
+    "kicker_name": "J.Moody",
+    "attempts_eff": 170.49191495439032,
+    "bands": {
+      "long": {
+        "delta_logit": -0.05221623468080683,
+        "se": 0.22953531745808559,
+        "n_eff": 6.401138741055683
+      },
+      "mid": {
+        "delta_logit": -0.08904349231258957,
+        "se": 0.20281894662177974,
+        "n_eff": 12.174771004575813
+      },
+      "short": {
+        "delta_logit": -0.07628318005394208,
+        "se": 0.2794971317270979,
+        "n_eff": 15.525204984396549
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0038905",
+    "kicker_name": "B.Grupe",
+    "attempts_eff": 220.51948929729096,
+    "bands": {
+      "long": {
+        "delta_logit": 0.0036620327270928676,
+        "se": 0.226309148863724,
+        "n_eff": 10.812025113938008
+      },
+      "mid": {
+        "delta_logit": -0.034285481378276694,
+        "se": 0.2078118033042544,
+        "n_eff": 9.583191033950667
+      },
+      "short": {
+        "delta_logit": -0.01542886641284813,
+        "se": 0.2804428084862922,
+        "n_eff": 23.044745615994522
+      },
+      "xlong": {
+        "delta_logit": -0.05338082202913665,
+        "se": 0.43104441192086107,
+        "n_eff": 0.5515894110818732
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0038567",
+    "kicker_name": "C.Ryland",
+    "attempts_eff": 175.53289717092116,
+    "bands": {
+      "long": {
+        "delta_logit": 0.022958707035678483,
+        "se": 0.23333046652832282,
+        "n_eff": 6.022944402744271
+      },
+      "mid": {
+        "delta_logit": -0.05937121846695881,
+        "se": 0.20357250504378918,
+        "n_eff": 13.265421833047707
+      },
+      "short": {
+        "delta_logit": 0.06052639187291309,
+        "se": 0.2958889214901514,
+        "n_eff": 15.733595955071431
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0038152",
+    "kicker_name": "L.Havrisik",
+    "attempts_eff": 36.85394253762654,
+    "bands": {
+      "long": {
+        "delta_logit": -0.0012555228841960586,
+        "se": 0.23953805905216097,
+        "n_eff": 0.7959223921459456
+      },
+      "mid": {
+        "delta_logit": -0.023219072831218934,
+        "se": 0.2142393077261139,
+        "n_eff": 2.6032975281771846
+      },
+      "short": {
+        "delta_logit": 0.028452538370630887,
+        "se": 0.30273935915145783,
+        "n_eff": 3.990496892164235
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0033854",
+    "kicker_name": "D.Ogunbowale",
+    "attempts_eff": 1.2826089625254358,
+    "bands": {
+      "short": {
+        "delta_logit": 0.0018486722665720379,
+        "se": 0.30302589892302256,
+        "n_eff": 0.25584347299919374
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0039649",
+    "kicker_name": "B.Narveson",
+    "attempts_eff": 43.28266580090068,
+    "bands": {
+      "long": {
+        "delta_logit": -0.02276949785934168,
+        "se": 0.23889656929193717,
+        "n_eff": 0.566660111115718
+      },
+      "mid": {
+        "delta_logit": -0.04300980592491466,
+        "se": 0.21164616328238,
+        "n_eff": 4.305439248174348
+      },
+      "short": {
+        "delta_logit": -0.016676238420055167,
+        "se": 0.2972267758671092,
+        "n_eff": 3.781113763882419
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0039409",
+    "kicker_name": "C.Little",
+    "attempts_eff": 138.25202290965046,
+    "bands": {
+      "long": {
+        "delta_logit": 0.002600175630056434,
+        "se": 0.23355551038126357,
+        "n_eff": 5.167887247607247
+      },
+      "mid": {
+        "delta_logit": -0.01210811179249216,
+        "se": 0.20915590154592045,
+        "n_eff": 9.472242645638525
+      },
+      "short": {
+        "delta_logit": 0.08963850615390045,
+        "se": 0.3021076408949071,
+        "n_eff": 12.966348020939158
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0039750",
+    "kicker_name": "J.Karty",
+    "attempts_eff": 168.91305665708737,
+    "bands": {
+      "long": {
+        "delta_logit": 0.014226404442759244,
+        "se": 0.23332629916286565,
+        "n_eff": 5.728078698573656
+      },
+      "mid": {
+        "delta_logit": -0.012765335409915313,
+        "se": 0.21067990656185395,
+        "n_eff": 7.545254516370287
+      },
+      "short": {
+        "delta_logit": -0.10743457370439513,
+        "se": 0.27185592550045046,
+        "n_eff": 20.526558646876587
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0039172",
+    "kicker_name": "J.Bates",
+    "attempts_eff": 121.21794532080774,
+    "bands": {
+      "long": {
+        "delta_logit": 0.013178094200818058,
+        "se": 0.2333534034941847,
+        "n_eff": 5.672425942890582
+      },
+      "mid": {
+        "delta_logit": 0.039255731143771344,
+        "se": 0.21486448805603023,
+        "n_eff": 6.212405620405658
+      },
+      "short": {
+        "delta_logit": 0.0766193453814763,
+        "se": 0.3022389454091205,
+        "n_eff": 11.010201367919842
+      },
+      "xlong": {
+        "delta_logit": -0.14132261757467102,
+        "se": 0.42262201658467674,
+        "n_eff": 1.5270330561667222
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0039404",
+    "kicker_name": "W.Reichard",
+    "attempts_eff": 125.51358490884014,
+    "bands": {
+      "long": {
+        "delta_logit": 0.0022262020008722017,
+        "se": 0.22879837850180545,
+        "n_eff": 8.775352390877268
+      },
+      "mid": {
+        "delta_logit": -0.003108403275900562,
+        "se": 0.2136016904267414,
+        "n_eff": 4.71672033127393
+      },
+      "short": {
+        "delta_logit": 0.027347852847841025,
+        "se": 0.29635122521232665,
+        "n_eff": 10.5930912910226
+      },
+      "xlong": {
+        "delta_logit": 0.09205836756374747,
+        "se": 0.4271463246949766,
+        "n_eff": 0.958525613502759
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0039934",
+    "kicker_name": "J.McAtamney",
+    "attempts_eff": 12.270155481184688,
+    "bands": {
+      "short": {
+        "delta_logit": 0.01762628200338323,
+        "se": 0.3028550770874287,
+        "n_eff": 2.4587068690087093
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0037542",
+    "kicker_name": "J.Romo",
+    "attempts_eff": 85.20750586614818,
+    "bands": {
+      "long": {
+        "delta_logit": -0.011677209852078652,
+        "se": 0.23668269890586316,
+        "n_eff": 2.448424060568702
+      },
+      "mid": {
+        "delta_logit": -0.03164094446518706,
+        "se": 0.21286369123191642,
+        "n_eff": 3.636226563206182
+      },
+      "short": {
+        "delta_logit": -0.012545762644843972,
+        "se": 0.29111350037118716,
+        "n_eff": 10.91180099407385
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0039576",
+    "kicker_name": "S.Shrader",
+    "attempts_eff": 79.88237789707368,
+    "bands": {
+      "long": {
+        "delta_logit": -0.020831461225614745,
+        "se": 0.23701090070674805,
+        "n_eff": 1.930057554656365
+      },
+      "mid": {
+        "delta_logit": 0.031081756529612647,
+        "se": 0.21718345820037516,
+        "n_eff": 2.938285721861132
+      },
+      "short": {
+        "delta_logit": 0.0769993307679715,
+        "se": 0.3022350895945185,
+        "n_eff": 11.066934621298586
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0040074",
+    "kicker_name": "T.Loop",
+    "attempts_eff": 48.26961322151163,
+    "bands": {
+      "long": {
+        "delta_logit": -0.022538666353907222,
+        "se": 0.2369525085611036,
+        "n_eff": 1.9177477444712387
+      },
+      "mid": {
+        "delta_logit": 0.04012663423680607,
+        "se": 0.21697535689744257,
+        "n_eff": 3.8106312850522293
+      },
+      "short": {
+        "delta_logit": 0.027816295822038484,
+        "se": 0.30274612630646625,
+        "n_eff": 3.9000165449744775
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0040279",
+    "kicker_name": "R.Fitzgerald",
+    "attempts_eff": 53.58917207959114,
+    "bands": {
+      "long": {
+        "delta_logit": -0.004015060769124168,
+        "se": 0.2363505453637872,
+        "n_eff": 2.928133998231994
+      },
+      "mid": {
+        "delta_logit": 0.03043565871664433,
+        "se": 0.21719838789783485,
+        "n_eff": 2.8762733579739974
+      },
+      "short": {
+        "delta_logit": 0.034721451307193174,
+        "se": 0.3026729041101854,
+        "n_eff": 4.885086660899259
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0038428",
+    "kicker_name": "A.Szmyt",
+    "attempts_eff": 53.39528601728051,
+    "bands": {
+      "long": {
+        "delta_logit": -0.004015060769124168,
+        "se": 0.2363505453637872,
+        "n_eff": 2.928133998231994
+      },
+      "mid": {
+        "delta_logit": 0.009974876143651779,
+        "se": 0.21767567063992727,
+        "n_eff": 0.9330329915368074
+      },
+      "short": {
+        "delta_logit": -0.035021905077536,
+        "se": 0.2921206596823356,
+        "n_eff": 6.7896515935896735
+      }
+    }
+  },
+  {
+    "kicker_id": "00-0040200",
+    "kicker_name": "A.Borregales",
+    "attempts_eff": 42.16410988360616,
+    "bands": {
+      "long": {
+        "delta_logit": 0.03425433994006133,
+        "se": 0.23955498228835112,
+        "n_eff": 1.930408160245243
+      },
+      "mid": {
+        "delta_logit": -0.024088231605843502,
+        "se": 0.21483040133424094,
+        "n_eff": 1.8660659830736148
+      },
+      "short": {
+        "delta_logit": 0.03444999125958992,
+        "se": 0.3026757734558869,
+        "n_eff": 4.84623234829211
+      }
+    }
+  }
+]
