@@ -496,7 +496,12 @@
 
     // --- Environment segmented control
     function setEnv(which){
-      state.env = which;
+      which = window.FG?.norm?.env(which);
+      // update state + emit
+      window.state = window.state || {};
+      window.state.env = which;
+      window.dispatchEvent(new CustomEvent('fg:stateChanged', { detail: { ...window.state } }));
+      // reflect buttons
       envIndoorBtn.classList.toggle('on', which==='indoor');
       envIndoorBtn.classList.toggle('off', which!=='indoor');
       envIndoorBtn.setAttribute('aria-pressed', String(which==='indoor'));
@@ -573,6 +578,90 @@
     })();
   </script>
 
+<script id="fg-core">
+  (function(){
+    // Namespace
+    window.FG = window.FG || {};
+    const FG = window.FG;
+  
+    // ---------- Single-init “ready” to prevent DataStore races ----------
+    FG.ready = function(){
+      if (FG._ready) return FG._ready;
+      FG._ready = (async ()=> {
+        if (!FG.DataStore && FG.DataStoreClass?.init){
+          FG.DataStore = await FG.DataStoreClass.init({ baseUrl: '.' });
+        }
+        return FG.DataStore;
+      })();
+      return FG._ready;
+    };
+  
+    // ---------- Keyed listener binder (de-dupes) ----------
+    const _bound = new WeakMap();
+    FG.on = function(el, type, handler, key, opts){
+      if(!el || !type || !handler) return;
+      let map = _bound.get(el);
+      if(!map){ map = new Map(); _bound.set(el, map); }
+      const sig = type + '::' + String(key || handler);
+      if(map.has(sig)) return; // already attached
+      el.addEventListener(type, handler, opts || false);
+      map.set(sig, { handler, opts: (opts || false) });
+    };
+  
+    // ---------- Coalesced state emitter (avoids event storms) ----------
+    let _pending = false, _last = null;
+    FG.emitState = function(detail){
+      _last = detail || { ...(window.state || {}) };
+      if(_pending) return;
+      _pending = true;
+      requestAnimationFrame(()=>{
+        window.dispatchEvent(new CustomEvent('fg:stateChanged', { detail:_last }));
+        _pending = false;
+      });
+    };
+  
+    // ---------- Normalizers (fix string compare edge-cases) ----------
+    FG.norm = {
+      team: t => String(t||'').trim().toUpperCase(),
+      env:  v => (String(v||'').toLowerCase()==='outdoor' ? 'outdoor' : 'indoor'),
+      windDir(v){
+        const ok = { calm:1, head:1, tail:1, crossL:1, crossR:1 };
+        const s = String(v||'').trim();
+        return ok[s] ? s : 'calm';
+      },
+      bool: v => (v===true) || (String(v).toLowerCase()==='true')
+    };
+  
+    // ---------- Abortable fetch to prevent overlapping results ----------
+    const _inflight = new Map();
+    FG.fetchJson = async function(url, key=url){
+      try{
+        const prev = _inflight.get(key);
+        if(prev){ prev.abort.abort(); }
+        const abort = new AbortController();
+        _inflight.set(key, { abort });
+        const res = await fetch(url, { cache:'no-store', signal: abort.signal });
+        _inflight.delete(key);
+        if(!res.ok) throw new Error(res.status+':'+res.statusText);
+        return await res.json();
+      }catch(err){
+        if(err?.name === 'AbortError') return { __aborted:true };
+        return { __missing:true, __error:String(err), __url:url };
+      }
+    };
+  
+    // ---------- Mount guard for components (prevents double mount) ----------
+    FG.mountOnce = function(host, key){
+      if(!host) return false;
+      const k = 'fgMount_' + key;
+      if(host.dataset[k] === '1') return false;
+      host.dataset[k] = '1';
+      return true;
+    };
+  })();
+  </script>
+  
+
   <!-- Paste this <script> block near the end of index.html, before the closing </body> -->
 <script>
   /*
@@ -629,13 +718,7 @@
   
     // ------------------- Fetch JSON utility -------------------
     async function fetchJson(url){
-      try{
-        const res = await fetch(url, { cache: 'no-store' });
-        if(!res.ok) throw new Error(res.status+':'+res.statusText);
-        return await res.json();
-      }catch(err){
-        return { __missing: true, __error: String(err), __url: url };
-      }
+      return await (window.FG?.fetchJson?.(url, url)) || { __missing:true, __url:url };
     }
   
     // ------------------- Schema helpers -------------------
@@ -714,6 +797,42 @@
   
     // ------------------- DataStore -------------------
     class DataStore {
+
+      // Inside class DataStore { ... }
+
+      _applyVenueAdjustments({ stadiumId=null, env='indoor', distance, temp_F=60,
+                              wind_mph=0, wind_head_mps=0, wind_cross_mps=0,
+                              altitude_m=0 }) {
+        // Wind attenuation by roof type; indoor = no wind
+        // Tunables: retractable roofs still dampen wind quite a bit.
+        let windMult = (env === 'indoor') ? 0 : 1;
+
+        try {
+          const v = this.getVenueById?.(stadiumId);
+          const roof = String(v?.roof_type || '').toLowerCase();
+          if (env !== 'indoor') {
+            if (roof.includes('retract')) windMult = 0.35;
+            if (roof.includes('dome'))    windMult = 0; // safety
+          }
+        } catch {}
+
+        wind_mph       *= windMult;
+        wind_head_mps  *= windMult;
+        wind_cross_mps *= windMult;
+
+        // If the make grid has NO altitude axis, apply a light physics-y correction:
+        // air density drops with altitude ⇒ longer carry ⇒ effectively shorter kick.
+        // adr ≈ exp(-alt/8500 m); carry ~ adr^-0.5 ⇒ scale distance by 1/carry.
+        const hasAltAxis = (this._make?.schema >= 2);
+        if (!hasAltAxis && altitude_m) {
+          const adr   = Math.exp(-(Number(altitude_m)||0)/8500);
+          const carry = Math.pow(adr, -0.5);
+          distance = distance / carry; // “effective” distance
+        }
+
+        return { distance, temp_F, wind_mph, wind_head_mps, wind_cross_mps, altitude_m };
+      }
+
       static async init(opts){
         const base = (opts?.baseUrl || '.').replace(/\/$/, '');
         const files = {
@@ -796,19 +915,52 @@
       getKickers(team){ return this._kickersByTeam.get(team)||[]; }
   
       // League make probability (no kicker deltas applied)
-      getMakeProb({ env='indoor', distance, temp_F=60, wind_mph=0, wind_head_mps=null, wind_cross_mps=null, altitude_m=0 }){
-        const key = this._mkKey(env, distance, temp_F, wind_mph, wind_head_mps, wind_cross_mps, altitude_m);
+      getMakeProb({
+        env = 'indoor',
+        distance,
+        temp_F = 60,
+        wind_mph = 0,
+        wind_head_mps = null,
+        wind_cross_mps = null,
+        altitude_m = 0,
+        stadiumId = null
+      }) {
+        // Normalize via venue adjustments (wind attenuation, indoor wind=0, altitude fallback)
+        const adj = this._applyVenueAdjustments({
+          stadiumId,
+          env,
+          distance,
+          temp_F,
+          wind_mph,
+          wind_head_mps: wind_head_mps ?? 0,
+          wind_cross_mps: wind_cross_mps ?? 0,
+          altitude_m
+        });
+
+        const key = this._mkKey(
+          env,
+          adj.distance,
+          adj.temp_F,
+          adj.wind_mph,
+          adj.wind_head_mps,
+          adj.wind_cross_mps,
+          adj.altitude_m
+        );
+
         let row = this._makeIdx[env].get(key);
-        if(!row){
-          // fallback path: nearest by env+distance only
-          const pool = this._make.byEnv[env]||[];
-          let best=null, bd=1e9;
-          for(const r of pool){ const d = Math.abs(r.distance - distance); if(d<bd){ bd=d; best=r; } }
+        if (!row) {
+          // fallback path: nearest by env + distance only (use adjusted distance)
+          const pool = this._make.byEnv[env] || [];
+          let best = null, bd = 1e9;
+          for (const r of pool) {
+            const d = Math.abs(r.distance - adj.distance);
+            if (d < bd) { bd = d; best = r; }
+          }
           row = best;
         }
         return row ? +row.prob_mean : 0.5;
       }
-  
+
       // Attempt propensity (league baseline)
       getAttemptProb({ env='indoor', distance, score_bin='close', time_bin='mid', ytg_bin='med', hash=null }){
         const key = this._atKey(env, distance, score_bin, time_bin, ytg_bin, hash);
@@ -824,7 +976,7 @@
         }
         return row ? +row.prob_attempt_mean : 0.25;
       }
-  
+
       // Kicker delta on logit scale
       getKickerDeltaLogit(kickerId, distance){
         const kid = String(kickerId||'');
@@ -859,18 +1011,39 @@
         }
         return { delta_logit: dl, se: Math.sqrt(varSum) };
       }
-  
+
       // Optional: coupled attempt given kicker delta and sensitivity
-      getCoupledAttemptProb({ env='indoor', distance, score_bin='close', time_bin='mid', ytg_bin='med', kickerId=null, temp_F=60, wind_mph=0, wind_head_mps=null, wind_cross_mps=null, altitude_m=0 }){
-        // Base attempt
+      getCoupledAttemptProb({
+        env = 'indoor',
+        distance,
+        score_bin = 'close',
+        time_bin = 'mid',
+        ytg_bin = 'med',
+        kickerId = null,
+        temp_F = 60,
+        wind_mph = 0,
+        wind_head_mps = null,
+        wind_cross_mps = null,
+        altitude_m = 0,
+        stadiumId = null
+      }){
+        // Base attempt (context-only)
         const pA = this.getAttemptProb({ env, distance, score_bin, time_bin, ytg_bin });
-        // League make and kicker-adjusted make
-        const pM_league = this.getMakeProb({ env, distance, temp_F, wind_mph, wind_head_mps, wind_cross_mps, altitude_m });
-        const dK = this.getKickerDeltaLogit(kickerId, distance).delta_logit;
+
+        // League make under venue-adjusted conditions
+        const pM_league = this.getMakeProb({
+          env, distance, temp_F,
+          wind_mph, wind_head_mps, wind_cross_mps,
+          altitude_m, stadiumId
+        });
+
+        // Kicker-adjusted make (no shrink here; charts may apply their own)
+        const { delta_logit: dK } = this.getKickerDeltaLogit(kickerId, distance);
         const pM_kicker = sigmoid(logit(pM_league) + dK);
-        // Sensitivity
-        const {A,B,C} = this._sens;
-        const lp = A + C*logit(pA) + B*(logit(pM_kicker) - logit(pM_league));
+
+        // Sensitivity coupling
+        const { A, B, C } = this._sens;
+        const lp = A + C * logit(pA) + B * (logit(pM_kicker) - logit(pM_league));
         return sigmoid(lp);
       }
     }
@@ -883,12 +1056,9 @@
     window.FG.DataStoreClass = DataStore;
 
     (async () => {
-      if (!window.FG.DataStore) {
-        window.FG.DataStore = await DataStore.init({ baseUrl: '.' });
-      }
-      // Emit once so listeners render with defaults
+      await (window.FG?.ready?.());
       window.state = window.state || {};
-      window.dispatchEvent(new CustomEvent('fg:stateChanged', { detail: { ...window.state }}));
+      window.FG?.emitState?.({ ...window.state });
     })();
   })();
   </script>
@@ -907,6 +1077,8 @@ All IDs coexist with Part 1; this adds a left-rail selector and syncs with top-b
 ========================= -->
 <script>
 (function(){
+  if (window.__fgSelectorsInitRan) return; 
+    window.__fgSelectorsInitRan = true;
   // Ensure FG namespace exists (from Part 2)
   window.FG = window.FG || {};
 
@@ -948,7 +1120,7 @@ All IDs coexist with Part 1; this adds a left-rail selector and syncs with top-b
   ];
 
   function emitState(){
-    window.dispatchEvent(new CustomEvent('fg:stateChanged', { detail: { ...state } }));
+    window.FG?.emitState?.({ ...state });
   }
 
   // ---------- Range track paint with danger zone (62–68 yd) ----------
@@ -993,7 +1165,7 @@ All IDs coexist with Part 1; this adds a left-rail selector and syncs with top-b
     if(!windDirCard) return;
     const btns = [...windDirCard.querySelectorAll('button[data-dir]')];
     function set(which){
-      state.windDir = which;
+      state.windDir = window.FG?.norm?.windDir(which);
       for(const b of btns){
         const on = b.dataset.dir===which; b.classList.toggle('on', on); b.classList.toggle('off', !on); b.setAttribute('aria-pressed', String(on));
       }
@@ -1038,123 +1210,139 @@ async function deriveTeamsFromDepthCharts(csvUrl){
 
   // ---------- Populate from DataStore ----------
   async function initSelectors(){
-  // Ensure DataStore is ready
-  const ds = window.FG.DataStore || await window.FG.DataStoreClass?.init?.({ baseUrl: '.' }) || null;
+    // Ensure DataStore is ready
+    const ds = await window.FG?.ready?.();
 
-  // Teams
-  let teams = ds?.getTeams?.() ?? [];
-  if (!teams.length) {
-    try {
-      teams = (await deriveTeamsFromDepthCharts('./depth_charts.csv')) ?? [];
-    } catch { /* noop */ }
-  }
-  if (!teams.length) teams = NFL_TEAMS;
+    // Teams
+    let teams = ds?.getTeams?.() ?? [];
+    if (!teams.length) {
+      try {
+        teams = (await deriveTeamsFromDepthCharts('./depth_charts.csv')) ?? [];
+      } catch { /* noop */ }
+    }
+    if (!teams.length) teams = NFL_TEAMS;
 
-  // Populate team selects
-  if (teamTop){
-    teamTop.innerHTML = '';
-    teamTop.appendChild(option('— select —',''));
-    for (const t of teams) teamTop.appendChild(option(t,t));
-  }
-  if (teamLR){
-    teamLR.innerHTML = '';
-    teamLR.appendChild(option('— select —',''));
-    for (const t of teams) teamLR.appendChild(option(t,t));
-  }
-
-  // Team → kicker binding (works with DataStore v2 or bootstrap roster)
-  function fillKickers(selectEl, team){
-    if(!selectEl) return;
-    selectEl.innerHTML = '';
-    if(!team){
-      selectEl.disabled = true;
-      selectEl.appendChild(option('— select team first —',''));
-      return;
+    // Populate team selects
+    if (teamTop){
+      teamTop.innerHTML = '';
+      teamTop.appendChild(option('— select —',''));
+      for (const t of teams) teamTop.appendChild(option(t,t));
+    }
+    if (teamLR){
+      teamLR.innerHTML = '';
+      teamLR.appendChild(option('— select —',''));
+      for (const t of teams) teamLR.appendChild(option(t,t));
     }
 
-    const ks =
-      (ds?.getKickersByTeam?.(team)) ||
-      (ds?.getKickers?.(team)) ||
-      [];
+    // Team → kicker binding (works with DataStore v2 or bootstrap roster)
+    function fillKickers(team){
+      const top  = document.getElementById('kickerSelect');
+      const left = document.getElementById('kickerSelectLR');
 
-    if(!ks.length){
-      selectEl.disabled = true;
-      selectEl.appendChild(option('— no kickers —',''));
-      return;
+      const setDisabled = (el, msg) => {
+        if(!el) return;
+        el.innerHTML = '';
+        el.appendChild(option(msg, ''));
+        el.disabled = true;
+      };
+
+      const enable = (el) => { if(el){ el.disabled = false; el.removeAttribute('disabled'); } };
+
+      // No team yet
+      if(!team || !(ds?.getKickersByTeam || ds?.getKickers)){
+        setDisabled(top,  '— select team first —');
+        setDisabled(left, '— select team first —');
+        return '';
+      }
+
+      const list = (ds.getKickersByTeam ? ds.getKickersByTeam(team) : ds.getKickers(team)) || [];
+      if(!list.length){
+        setDisabled(top,  '— no kickers —');
+        setDisabled(left, '— no kickers —');
+        return '';
+      }
+
+      const isStarter = k => !!(k.isStarter || k.starter);
+      const isActive  = k => (k.active !== false) && !/inactive|ir|retired|practice/i.test(String(k.status||''));
+      const prevId    = window.state?.kicker ? String(window.state.kicker) : '';
+
+      const apply = (el) => {
+        if(!el) return;
+        el.innerHTML = '';
+        for(const k of list){
+          const label = `${k.name}${isStarter(k) ? ' (starter)' : ''}${isActive(k) ? '' : ' [inactive]'}`;
+          el.appendChild(option(label, String(k.id), { disabled: !isActive(k) }));
+        }
+        enable(el);
+      };
+
+      apply(top); apply(left);
+
+      const hasPrev     = prevId && list.some(k => String(k.id) === prevId && isActive(k));
+      const starter     = list.find(isStarter);
+      const firstActive = list.find(isActive) || list[0];
+      const selectedId  = String(hasPrev ? prevId : (starter?.id ?? firstActive?.id ?? ''));
+
+      if(top)  top.value  = selectedId;
+      if(left) left.value = selectedId;
+
+      return selectedId;
     }
 
-    selectEl.disabled = false;
+    function onTeamChange(newTeam){
+      state.team = newTeam || '';
 
-    const isStarter = k => !!(k.isStarter || k.starter);
-    const isActive  = k => (k.active !== false) && !/inactive/i.test(String(k.status||''));
+      // Fill both kicker dropdowns
+      fillKickers(kickerTop, state.team);
+      fillKickers(kickerLR,  state.team);
 
-    const starter     = ks.find(isStarter);
-    const firstActive = ks.find(isActive) || ks[0];
+      // Choose selected kicker coherently across both
+      const pick =
+        (kickerLR && kickerLR.value) ||
+        (kickerTop && kickerTop.value) ||
+        '';
 
-    for(const k of ks){
-      const label = `${k.name}${isStarter(k) ? ' (starter)' : ''}`;
-      const opt = option(label, String(k.id), { disabled: !isActive(k) });
-      selectEl.appendChild(opt);
+      state.kicker = String(pick || '');
+      syncSelectValues();
+      emitState();
     }
 
-    // Prefer starter if present, else first active
-    selectEl.value = String((starter?.id) ?? firstActive.id);
+    function onKickerChange(newKicker){
+      state.kicker = newKicker || '';
+      syncSelectValues();
+      emitState();
+    }
+
+    // Initial defaults — pick first team (populates kickers & selects a default)
+    const firstTeam = teams[0] || '';
+    onTeamChange(firstTeam);
+
+    // Bind changes (top and left)
+    FG.on(teamTop,  'change', ()=> onTeamChange(teamTop.value),  'teamTop:change');
+    FG.on(teamLR,   'change', ()=> onTeamChange(teamLR.value),   'teamLR:change');
+    FG.on(kickerTop,'change', ()=> onKickerChange(kickerTop.value),'kTop:change');
+    FG.on(kickerLR, 'change', ()=> onKickerChange(kickerLR.value),'kLR:change');
+
+    // Env + sliders
+    FG.on(envIndoorBtn,  'click', ()=> setEnv('indoor'),  'env:indoor');
+    FG.on(envOutdoorBtn, 'click', ()=> setEnv('outdoor'), 'env:outdoor');
+
+    const syncSliders = ()=>{
+      state.distance = +distance.value; distanceVal && (distanceVal.textContent = state.distance);
+      state.tempF    = +temp.value;     tempVal     && (tempVal.textContent     = state.tempF);
+      state.wind     = +wind.value;     windVal     && (windVal.textContent     = state.wind);
+      paintDistanceTrack();
+      emitState();
+    };
+    FG.on(distance, 'input', syncSliders, 'dist:input');
+    FG.on(temp,     'input', syncSliders, 'temp:input');
+    FG.on(wind,     'input', syncSliders, 'wind:input');
+
+    bindWindDir();
+
+    // Emit initial
+    window.FG?.emitState?.({ ...state });
   }
-
-  function onTeamChange(newTeam){
-    state.team = newTeam || '';
-
-    // Fill both kicker dropdowns
-    fillKickers(kickerTop, state.team);
-    fillKickers(kickerLR,  state.team);
-
-    // Choose selected kicker coherently across both
-    const pick =
-      (kickerLR && kickerLR.value) ||
-      (kickerTop && kickerTop.value) ||
-      '';
-
-    state.kicker = String(pick || '');
-    syncSelectValues();
-    emitState();
-  }
-
-  function onKickerChange(newKicker){
-    state.kicker = newKicker || '';
-    syncSelectValues();
-    emitState();
-  }
-
-  // Initial defaults — pick first team (populates kickers & selects a default)
-  const firstTeam = teams[0] || '';
-  onTeamChange(firstTeam);
-
-  // Bind changes (top and left)
-  teamTop   && teamTop.addEventListener('change', ()=> onTeamChange(teamTop.value));
-  teamLR    && teamLR.addEventListener('change', ()=> onTeamChange(teamLR.value));
-  kickerTop && kickerTop.addEventListener('change', ()=> onKickerChange(kickerTop.value));
-  kickerLR  && kickerLR.addEventListener('change', ()=> onKickerChange(kickerLR.value));
-
-  // Env + sliders
-  envIndoorBtn && envIndoorBtn.addEventListener('click', ()=> setEnv('indoor'));
-  envOutdoorBtn&& envOutdoorBtn.addEventListener('click', ()=> setEnv('outdoor'));
-
-  const syncSliders = ()=>{
-    state.distance = +distance.value; distanceVal && (distanceVal.textContent = state.distance);
-    state.tempF    = +temp.value;     tempVal     && (tempVal.textContent     = state.tempF);
-    state.wind     = +wind.value;     windVal     && (windVal.textContent     = state.wind);
-    paintDistanceTrack();
-    emitState();
-  };
-  distance && distance.addEventListener('input', syncSliders);
-  temp     && temp.addEventListener('input', syncSliders);
-  wind     && wind.addEventListener('input', syncSliders);
-
-  bindWindDir();
-
-  // Emit initial
-  emitState();
-}
 
   // Kick off after DOM is ready
   if(document.readyState === 'loading'){
@@ -1280,7 +1468,8 @@ Canvas-based; no external chart libs.
           const pL = ds.getMakeProb({
             env, distance:d, temp_F:tF,
             wind_mph:mph, wind_head_mps: head*0.44704, wind_cross_mps: cross*0.44704,
-            altitude_m
+            altitude_m,
+            stadiumId: (this.state?.stadiumId || null)
           });
           let dK = 0, se=0; const del = ds.getKickerDeltaLogit(kid, d) || {delta_logit:0,se:0};
           dK = +del.delta_logit||0; se=+del.se||0;
@@ -1420,17 +1609,21 @@ Canvas-based; no external chart libs.
   
     // Mount into #makeChart stub
     async function mount(){
-      const el = document.getElementById('makeChart'); if(!el) return;
+      const el = document.getElementById('makeChart'); 
+      if(!el || !window.FG?.mountOnce?.(el, 'makeChart')) return;   // guard
       const chart = new MakeChart(el);
-      const ds = window.FG?.DataStore || await window.FG?.DataStoreClass?.init?.({ baseUrl: '.' });
+      const ds = await window.FG?.ready?.();
       chart.setState(window.state||{});
       await chart.setDataStore(ds);
-  
-      // Update on state changes
-      window.addEventListener('fg:stateChanged', (e)=>{ chart.setState(e.detail||window.state||{}); chart._maybeLoadQuantiles(); chart.render(); });
+
+      window.FG?.on(window, 'fg:stateChanged', (e)=>{
+        chart.setState(e.detail||window.state||{});
+        chart._maybeLoadQuantiles();
+        chart.render();
+      }, 'makeChart:state');
     }
-  
-    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', mount); else mount();
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', mount, { once:true }); else mount();
+
   })();
   </script>
   
@@ -1542,7 +1735,8 @@ Canvas-based attempt chart + coupling, with compare Starter vs Backup toggle.
         const kid = st.kicker || starter?.id || null;
         const mph = Number(st.wind||0);
         let head=0, cross=0;
-        switch(String(st.windDir||'calm')){
+        const safeDir = window.FG?.norm?.windDir(st.windDir) || 'calm';
+        switch(safeDir){
           case 'head': head=mph; break;
           case 'tail': head=-mph; break;
           case 'crossL': cross=-mph; break;
@@ -1558,14 +1752,16 @@ Canvas-based attempt chart + coupling, with compare Starter vs Backup toggle.
             env, distance:d, score_bin:s, time_bin:t, ytg_bin:y, kickerId:kid,
             temp_F: st.tempF||60,
             wind_mph: mph, wind_head_mps: head*0.44704, wind_cross_mps: cross*0.44704,
-            altitude_m
+            altitude_m,
+            stadiumId: (st.stadiumId || null)
           });
           coupStarter.push(pCoupledStarter);
           const pCoupledBackup = (this.compare && backup) ? ds.getCoupledAttemptProb({
             env, distance:d, score_bin:s, time_bin:t, ytg_bin:y, kickerId:backup.id,
             temp_F: st.tempF||60,
             wind_mph: mph, wind_head_mps: head*0.44704, wind_cross_mps: cross*0.44704,
-            altitude_m
+            altitude_m,
+            stadiumId: (st.stadiumId || null)
           }) : null;
           if(this.compare) coupBackup.push(pCoupledBackup);
           x.push(d);
@@ -1636,7 +1832,8 @@ Canvas-based attempt chart + coupling, with compare Starter vs Backup toggle.
         const mph = Number(st.wind || 0);
         const mps = mph * 0.44704;
         let wind_head_mps = 0, wind_cross_mps = 0;
-        switch(String(st.windDir || 'calm')){
+        const _dir = window.FG?.norm?.windDir(st.windDir) || 'calm';
+        switch(_dir){
           case 'head':   wind_head_mps  = +mps; break;
           case 'tail':   wind_head_mps  = -mps; break;
           case 'crossL': wind_cross_mps = -mps; break;
@@ -1651,7 +1848,8 @@ Canvas-based attempt chart + coupling, with compare Starter vs Backup toggle.
           env, distance:d,
           temp_F: st.tempF || 60,
           wind_mph: st.wind || 0,
-          wind_head_mps, wind_cross_mps, altitude_m
+          wind_head_mps, wind_cross_mps, altitude_m,
+          stadiumId: (st.stadiumId || null)
         });
 
         // Starter/backup resolution
@@ -1666,7 +1864,8 @@ Canvas-based attempt chart + coupling, with compare Starter vs Backup toggle.
             kickerId: id,
             temp_F: st.tempF || 60,
             wind_mph: st.wind || 0,
-            wind_head_mps, wind_cross_mps, altitude_m
+            wind_head_mps, wind_cross_mps, altitude_m,
+            stadiumId: (st.stadiumId || null)
           });
           const sens = pC * (1 - pC) * B;         // d Attempt / d (delta_make_logit)
           const pp10 = sens * 0.1 * 100;          // per +0.1 logit, in percentage points
@@ -1729,14 +1928,16 @@ Canvas-based attempt chart + coupling, with compare Starter vs Backup toggle.
     }
   
     async function mount(){
-      const el = document.getElementById('attemptTab'); if(!el) return;
+      const el = document.getElementById('attemptTab'); 
+      if(!el || !window.FG?.mountOnce?.(el, 'attemptTab')) return; // guard
       const chart = new AttemptChart(el);
-      const ds = window.FG?.DataStore || await window.FG?.DataStoreClass?.init?.({ baseUrl: '.' });
-      await chart.setDataStore(ds); chart.setState(window.state||{});
-      window.addEventListener('fg:stateChanged', (e)=>{ chart.setState(e.detail||window.state||{}); });
+      const ds = await window.FG?.ready?.();
+      await chart.setDataStore(ds);
+      chart.setState(window.state||{});
+      window.FG?.on(window, 'fg:stateChanged', (e)=> chart.setState(e.detail||window.state||{}), 'attempt:state');
     }
-  
-    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', mount); else mount();
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', mount, { once:true }); else mount();
+
   })();
   </script>
   
@@ -1823,7 +2024,8 @@ Paste this <script> block near the end of index.html AFTER Parts 1–5.
       const pL = ds.getMakeProb({
         env, distance:d, temp_F: st.tempF||60,
         wind_mph, wind_head_mps, wind_cross_mps,
-        altitude_m
+        altitude_m,
+        stadiumId: (st.stadiumId || null)
       });
       const del = ds.getKickerDeltaLogit(st.kicker||null, d) || {delta_logit:0, se:0};
       const w = 1 / (1 + Math.pow((+del.se||0)/0.8, 2));
@@ -1982,6 +2184,7 @@ Paste this <script> block near the end of index.html AFTER Parts 1–5.
         ts_iso: new Date().toISOString(),
         team: st.team||null,
         kicker: st.kicker||null,
+        stadiumId: st.stadiumId || null,
         env: st.env||'indoor',
         distance: Math.round(st.distance||45),
         temp_F: st.tempF||60,
@@ -2119,13 +2322,23 @@ if(document.readyState === 'loading'){
   
         const byTeam = new Map();
         for (const r of roster){
-          const t=(r.team||r.posteam||r.team_abbr||r.Team||'').toUpperCase(); if(!t) continue;
-          const name = r.kicker_name || r.player || r.name || r.full_name || r.Player || '';
-          const kid  = String(r.kicker_id || r.player_id || r.gsis_id || name);
-          const status = String(r.status||r.note||'active');
-          const depth = String(r.depth||r.depth_chart||r.depth_order||r.dc_rank||r.depth_chart_order||'');
-          const isStarter = /(^1$|K1|starter|primary)/i.test(depth) || String(r.is_starter).toLowerCase()==='true';
-          const active = !/inactive|ir|retired/i.test(status);
+          const RAW = (r.team||r.posteam||r.team_abbr||r.Team||r.club_code||'').toUpperCase();
+          const ALIAS = {
+            ARZ:'ARI', JAC:'JAX', LA:'LAR', SD:'LAC', STL:'LAR', OAK:'LV',
+            WSH:'WAS', WAS:'WAS', TB:'TB', SF:'SF', NE:'NE', NO:'NO'
+          };
+          const t = ALIAS[RAW] || RAW;
+          if(!t) continue;
+          const name = r.kicker_name || r.player_name || r.player || r.name || r.full_name || r.Player || '';
+          const kid  = String(r.kicker_id || r.player_id || r.gsis_id || r.id || name).trim();
+          const status = String(r.status||r.note||r.availability||'active');
+          const depth = String(r.depth||r.pos_rank||r.depth_chart||r.depth_order||r.dc_rank||r.depth_chart_order||r.role||'');
+          const isStarter = /(^1$|\bK1\b|starter|primary)/i.test(depth) || String(r.is_starter).toLowerCase()==='true';
+          const active = !/(inactive|injured|ir|retired|practice)/i.test(status);
+          const _pos = String(r.pos_abb||r.depth_position||r.position||r.pos_name||'').toUpperCase();
+          const _dc  = String(r.depth_chart||'').toUpperCase();
+          const isPK = _pos==='PK' || /^K\d$/.test(_dc) || /PLACE\s*KICK/i.test(String(r.pos_name||''));
+          if(!isPK) continue;
           const row = { id:kid, name, active, isStarter };
           if(!byTeam.has(t)) byTeam.set(t, []);
           byTeam.get(t).push(row);
@@ -2424,6 +2637,17 @@ function reflectAltitudeSeg(meters){
             window.state.altitude_m = Number(v.altitude_m||0) || 0;
             reflectAltitudeSeg(window.state.altitude_m);
           }
+          const _in = document.getElementById('envIndoor');
+          const _out = document.getElementById('envOutdoor');
+          if (_in && _out){
+            const e = window.state.env;
+            _in.classList.toggle('on',  e==='indoor');
+            _in.classList.toggle('off', e!=='indoor');
+            _in.setAttribute('aria-pressed', String(e==='indoor'));
+            _out.classList.toggle('on',  e==='outdoor');
+            _out.classList.toggle('off', e!=='outdoor');
+            _out.setAttribute('aria-pressed', String(e==='outdoor'));
+          }
           emit();
         }
   
@@ -2468,6 +2692,17 @@ function reflectAltitudeSeg(meters){
             altitude_m:v?.altitude_m || 0
           }, window.state||{});
           reflectAltitudeSeg(window.state.altitude_m);
+          const _in = document.getElementById('envIndoor');
+          const _out = document.getElementById('envOutdoor');
+          if (_in && _out){
+            const e = window.state.env;
+            _in.classList.toggle('on',  e==='indoor');
+            _in.classList.toggle('off', e!=='indoor');
+            _in.setAttribute('aria-pressed', String(e==='indoor'));
+            _out.classList.toggle('on',  e==='outdoor');
+            _out.classList.toggle('off', e!=='outdoor');
+            _out.setAttribute('aria-pressed', String(e==='outdoor'));
+          }
           emit();
         }
   

@@ -1,162 +1,578 @@
-{
-  "ARI": {
-    "starter_id": "00-0038567",
-    "starter_name": "C.Ryland",
-    "as_of_season": "2024"
+[
+  {
+    "club_code": "ARI",
+    "full_name": "Chad Ryland",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0038567",
+    "espn_id": "4363538",
+    "pfr_id": null,
+    "player_id": "00-0038567",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "ATL": {
-    "starter_id": "00-0033702",
-    "starter_name": "Y.Koo",
-    "as_of_season": "2024"
+  {
+    "club_code": "ATL",
+    "full_name": "Parker Romo",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0037542",
+    "espn_id": "4051167",
+    "pfr_id": null,
+    "player_id": "00-0037542",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "BAL": {
-    "starter_id": "00-0029597",
-    "starter_name": "J.Tucker",
-    "as_of_season": "2024"
+  {
+    "club_code": "BAL",
+    "full_name": "Tyler Loop",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0040074",
+    "espn_id": "4697745",
+    "pfr_id": null,
+    "player_id": "00-0040074",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "BUF": {
-    "starter_id": "00-0036162",
-    "starter_name": "T.Bass",
-    "as_of_season": "2024"
+  {
+    "club_code": "BUF",
+    "full_name": "Matt Prater",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0023853",
+    "espn_id": "11122",
+    "pfr_id": null,
+    "player_id": "00-0023853",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "CAR": {
-    "starter_id": "00-0034173",
-    "starter_name": "E.Pineiro",
-    "as_of_season": "2024"
+  {
+    "club_code": "BUF",
+    "full_name": "Tyler Bass",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 2,
+    "depth_chart": "K2",
+    "status": "",
+    "gsis_id": "00-0036162",
+    "espn_id": "3917232",
+    "pfr_id": null,
+    "player_id": "00-0036162",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "CHI": {
-    "starter_id": "00-0031203",
-    "starter_name": "C.Santos",
-    "as_of_season": "2024"
+  {
+    "club_code": "CAR",
+    "full_name": "Ryan Fitzgerald",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0040279",
+    "espn_id": "4568263",
+    "pfr_id": null,
+    "player_id": "00-0040279",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "CIN": {
-    "starter_id": "00-0036854",
-    "starter_name": "E.McPherson",
-    "as_of_season": "2024"
+  {
+    "club_code": "CHI",
+    "full_name": "Cairo Santos",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0031203",
+    "espn_id": "17427",
+    "pfr_id": null,
+    "player_id": "00-0031203",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "CLE": {
-    "starter_id": "00-0030098",
-    "starter_name": "D.Hopkins",
-    "as_of_season": "2024"
+  {
+    "club_code": "CIN",
+    "full_name": "Evan McPherson",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0036854",
+    "espn_id": "4360234",
+    "pfr_id": null,
+    "player_id": "00-0036854",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "DAL": {
-    "starter_id": "00-0037692",
-    "starter_name": "B.Aubrey",
-    "as_of_season": "2024"
+  {
+    "club_code": "CLE",
+    "full_name": "Andre Szmyt",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0038428",
+    "espn_id": "4258620",
+    "pfr_id": null,
+    "player_id": "00-0038428",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "DEN": {
-    "starter_id": "00-0032569",
-    "starter_name": "W.Lutz",
-    "as_of_season": "2024"
+  {
+    "club_code": "DAL",
+    "full_name": "Brandon Aubrey",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0037692",
+    "espn_id": "3953687",
+    "pfr_id": null,
+    "player_id": "00-0037692",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "DET": {
-    "starter_id": "00-0039172",
-    "starter_name": "J.Bates",
-    "as_of_season": "2024"
+  {
+    "club_code": "DEN",
+    "full_name": "Wil Lutz",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0032569",
+    "espn_id": "2985659",
+    "pfr_id": null,
+    "player_id": "00-0032569",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "GB": {
-    "starter_id": "00-0029822",
-    "starter_name": "B.McManus",
-    "as_of_season": "2024"
+  {
+    "club_code": "DET",
+    "full_name": "Jake Bates",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0039172",
+    "espn_id": "4689936",
+    "pfr_id": null,
+    "player_id": "00-0039172",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "HOU": {
-    "starter_id": "00-0032726",
-    "starter_name": "K.Fairbairn",
-    "as_of_season": "2024"
+  {
+    "club_code": "GB",
+    "full_name": "Brandon McManus",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0029822",
+    "espn_id": "16339",
+    "pfr_id": null,
+    "player_id": "00-0029822",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "IND": {
-    "starter_id": "00-0035269",
-    "starter_name": "M.Gay",
-    "as_of_season": "2024"
+  {
+    "club_code": "GB",
+    "full_name": "Lucas Havrisik",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 2,
+    "depth_chart": "K2",
+    "status": "",
+    "gsis_id": "00-0038152",
+    "espn_id": "4245661",
+    "pfr_id": null,
+    "player_id": "00-0038152",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "JAX": {
-    "starter_id": "00-0039409",
-    "starter_name": "C.Little",
-    "as_of_season": "2024"
+  {
+    "club_code": "HOU",
+    "full_name": "Ka'imi Fairbairn",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0032726",
+    "espn_id": "2971573",
+    "pfr_id": null,
+    "player_id": "00-0032726",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "KC": {
-    "starter_id": "00-0033303",
-    "starter_name": "H.Butker",
-    "as_of_season": "2024"
+  {
+    "club_code": "IND",
+    "full_name": "Michael Badgley",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0034084",
+    "espn_id": "3123052",
+    "pfr_id": null,
+    "player_id": "00-0034084",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "LA": {
-    "starter_id": "00-0039750",
-    "starter_name": "J.Karty",
-    "as_of_season": "2024"
+  {
+    "club_code": "IND",
+    "full_name": "Spencer Shrader",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 2,
+    "depth_chart": "K2",
+    "status": "",
+    "gsis_id": "00-0039576",
+    "espn_id": "4571557",
+    "pfr_id": null,
+    "player_id": "00-0039576",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "LAC": {
-    "starter_id": "00-0037224",
-    "starter_name": "C.Dicker",
-    "as_of_season": "2024"
+  {
+    "club_code": "JAX",
+    "full_name": "Cam Little",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0039409",
+    "espn_id": "4686361",
+    "pfr_id": null,
+    "player_id": "00-0039409",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "LV": {
-    "starter_id": "00-0034161",
-    "starter_name": "D.Carlson",
-    "as_of_season": "2024"
+  {
+    "club_code": "KC",
+    "full_name": "Harrison Butker",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0033303",
+    "espn_id": "3055899",
+    "pfr_id": null,
+    "player_id": "00-0033303",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "MIA": {
-    "starter_id": "00-0034794",
-    "starter_name": "J.Sanders",
-    "as_of_season": "2024"
+  {
+    "club_code": "LA",
+    "full_name": "Joshua Karty",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0039750",
+    "espn_id": "4566192",
+    "pfr_id": null,
+    "player_id": "00-0039750",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "MIN": {
-    "starter_id": "00-0039404",
-    "starter_name": "W.Reichard",
-    "as_of_season": "2024"
+  {
+    "club_code": "LAC",
+    "full_name": "Cameron Dicker",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0037224",
+    "espn_id": "4362081",
+    "pfr_id": null,
+    "player_id": "00-0037224",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "NE": {
-    "starter_id": "00-0035192",
-    "starter_name": "J.Slye",
-    "as_of_season": "2024"
+  {
+    "club_code": "LV",
+    "full_name": "Daniel Carlson",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0034161",
+    "espn_id": "3051909",
+    "pfr_id": null,
+    "player_id": "00-0034161",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "NO": {
-    "starter_id": "00-0038905",
-    "starter_name": "B.Grupe",
-    "as_of_season": "2024"
+  {
+    "club_code": "MIA",
+    "full_name": "Riley Patterson",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0036816",
+    "espn_id": "4243371",
+    "pfr_id": null,
+    "player_id": "00-0036816",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "NYG": {
-    "starter_id": "00-0034450",
-    "starter_name": "G.Joseph",
-    "as_of_season": "2024"
+  {
+    "club_code": "MIA",
+    "full_name": "Jason Sanders",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 2,
+    "depth_chart": "K2",
+    "status": "",
+    "gsis_id": "00-0034794",
+    "espn_id": "3124679",
+    "pfr_id": null,
+    "player_id": "00-0034794",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "NYJ": {
-    "starter_id": "00-0029621",
-    "starter_name": "G.Zuerlein",
-    "as_of_season": "2024"
+  {
+    "club_code": "MIN",
+    "full_name": "Will Reichard",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0039404",
+    "espn_id": "4567104",
+    "pfr_id": null,
+    "player_id": "00-0039404",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "PHI": {
-    "starter_id": "00-0033787",
-    "starter_name": "J.Elliott",
-    "as_of_season": "2024"
+  {
+    "club_code": "NE",
+    "full_name": "Andy Borregales",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0040200",
+    "espn_id": "4569923",
+    "pfr_id": null,
+    "player_id": "00-0040200",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "PIT": {
-    "starter_id": "00-0031136",
-    "starter_name": "C.Boswell",
-    "as_of_season": "2024"
+  {
+    "club_code": "NO",
+    "full_name": "Blake Grupe",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0038905",
+    "espn_id": "4259619",
+    "pfr_id": null,
+    "player_id": "00-0038905",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "SEA": {
-    "starter_id": "00-0031492",
-    "starter_name": "J.Myers",
-    "as_of_season": "2024"
+  {
+    "club_code": "NYG",
+    "full_name": "Graham Gano",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0026858",
+    "espn_id": "12460",
+    "pfr_id": null,
+    "player_id": "00-0026858",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "SF": {
-    "starter_id": "00-0038562",
-    "starter_name": "J.Moody",
-    "as_of_season": "2024"
+  {
+    "club_code": "NYJ",
+    "full_name": "Nick Folk",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0025565",
+    "espn_id": "10621",
+    "pfr_id": null,
+    "player_id": "00-0025565",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "TB": {
-    "starter_id": "00-0035358",
-    "starter_name": "C.McLaughlin",
-    "as_of_season": "2024"
+  {
+    "club_code": "PHI",
+    "full_name": "Jake Elliott",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0033787",
+    "espn_id": "3050478",
+    "pfr_id": null,
+    "player_id": "00-0033787",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "TEN": {
-    "starter_id": "00-0025565",
-    "starter_name": "N.Folk",
-    "as_of_season": "2024"
+  {
+    "club_code": "PIT",
+    "full_name": "Chris Boswell",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0031136",
+    "espn_id": "17372",
+    "pfr_id": null,
+    "player_id": "00-0031136",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   },
-  "WAS": {
-    "starter_id": "00-0035145",
-    "starter_name": "A.Seibert",
-    "as_of_season": "2024"
+  {
+    "club_code": "SEA",
+    "full_name": "Jason Myers",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0031492",
+    "espn_id": "2473037",
+    "pfr_id": null,
+    "player_id": "00-0031492",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
+  },
+  {
+    "club_code": "SF",
+    "full_name": "Eddy Pineiro",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0034173",
+    "espn_id": "4034949",
+    "pfr_id": null,
+    "player_id": "00-0034173",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
+  },
+  {
+    "club_code": "TB",
+    "full_name": "Chase McLaughlin",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0035358",
+    "espn_id": "3150744",
+    "pfr_id": null,
+    "player_id": "00-0035358",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
+  },
+  {
+    "club_code": "TEN",
+    "full_name": "Joey Slye",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0035192",
+    "espn_id": "3124084",
+    "pfr_id": null,
+    "player_id": "00-0035192",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
+  },
+  {
+    "club_code": "WAS",
+    "full_name": "Matt Gay",
+    "position": "K",
+    "depth_position": "K",
+    "depth_chart_order": 1,
+    "depth_chart": "K1",
+    "status": "",
+    "gsis_id": "00-0035269",
+    "espn_id": "4249087",
+    "pfr_id": null,
+    "player_id": "00-0035269",
+    "season": 2025,
+    "week": null,
+    "dt_iso": "2025-10-22T00:00:00Z"
   }
-}
+]

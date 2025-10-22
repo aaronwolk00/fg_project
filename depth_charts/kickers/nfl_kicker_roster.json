@@ -1,0 +1,162 @@
+{
+  "ARI": {
+    "starter_id": "00-0038567",
+    "starter_name": "C.Ryland",
+    "as_of_season": "2024"
+  },
+  "ATL": {
+    "starter_id": "00-0033702",
+    "starter_name": "Y.Koo",
+    "as_of_season": "2024"
+  },
+  "BAL": {
+    "starter_id": "00-0029597",
+    "starter_name": "J.Tucker",
+    "as_of_season": "2024"
+  },
+  "BUF": {
+    "starter_id": "00-0036162",
+    "starter_name": "T.Bass",
+    "as_of_season": "2024"
+  },
+  "CAR": {
+    "starter_id": "00-0034173",
+    "starter_name": "E.Pineiro",
+    "as_of_season": "2024"
+  },
+  "CHI": {
+    "starter_id": "00-0031203",
+    "starter_name": "C.Santos",
+    "as_of_season": "2024"
+  },
+  "CIN": {
+    "starter_id": "00-0036854",
+    "starter_name": "E.McPherson",
+    "as_of_season": "2024"
+  },
+  "CLE": {
+    "starter_id": "00-0030098",
+    "starter_name": "D.Hopkins",
+    "as_of_season": "2024"
+  },
+  "DAL": {
+    "starter_id": "00-0037692",
+    "starter_name": "B.Aubrey",
+    "as_of_season": "2024"
+  },
+  "DEN": {
+    "starter_id": "00-0032569",
+    "starter_name": "W.Lutz",
+    "as_of_season": "2024"
+  },
+  "DET": {
+    "starter_id": "00-0039172",
+    "starter_name": "J.Bates",
+    "as_of_season": "2024"
+  },
+  "GB": {
+    "starter_id": "00-0029822",
+    "starter_name": "B.McManus",
+    "as_of_season": "2024"
+  },
+  "HOU": {
+    "starter_id": "00-0032726",
+    "starter_name": "K.Fairbairn",
+    "as_of_season": "2024"
+  },
+  "IND": {
+    "starter_id": "00-0035269",
+    "starter_name": "M.Gay",
+    "as_of_season": "2024"
+  },
+  "JAX": {
+    "starter_id": "00-0039409",
+    "starter_name": "C.Little",
+    "as_of_season": "2024"
+  },
+  "KC": {
+    "starter_id": "00-0033303",
+    "starter_name": "H.Butker",
+    "as_of_season": "2024"
+  },
+  "LA": {
+    "starter_id": "00-0039750",
+    "starter_name": "J.Karty",
+    "as_of_season": "2024"
+  },
+  "LAC": {
+    "starter_id": "00-0037224",
+    "starter_name": "C.Dicker",
+    "as_of_season": "2024"
+  },
+  "LV": {
+    "starter_id": "00-0034161",
+    "starter_name": "D.Carlson",
+    "as_of_season": "2024"
+  },
+  "MIA": {
+    "starter_id": "00-0034794",
+    "starter_name": "J.Sanders",
+    "as_of_season": "2024"
+  },
+  "MIN": {
+    "starter_id": "00-0039404",
+    "starter_name": "W.Reichard",
+    "as_of_season": "2024"
+  },
+  "NE": {
+    "starter_id": "00-0035192",
+    "starter_name": "J.Slye",
+    "as_of_season": "2024"
+  },
+  "NO": {
+    "starter_id": "00-0038905",
+    "starter_name": "B.Grupe",
+    "as_of_season": "2024"
+  },
+  "NYG": {
+    "starter_id": "00-0034450",
+    "starter_name": "G.Joseph",
+    "as_of_season": "2024"
+  },
+  "NYJ": {
+    "starter_id": "00-0029621",
+    "starter_name": "G.Zuerlein",
+    "as_of_season": "2024"
+  },
+  "PHI": {
+    "starter_id": "00-0033787",
+    "starter_name": "J.Elliott",
+    "as_of_season": "2024"
+  },
+  "PIT": {
+    "starter_id": "00-0031136",
+    "starter_name": "C.Boswell",
+    "as_of_season": "2024"
+  },
+  "SEA": {
+    "starter_id": "00-0031492",
+    "starter_name": "J.Myers",
+    "as_of_season": "2024"
+  },
+  "SF": {
+    "starter_id": "00-0038562",
+    "starter_name": "J.Moody",
+    "as_of_season": "2024"
+  },
+  "TB": {
+    "starter_id": "00-0035358",
+    "starter_name": "C.McLaughlin",
+    "as_of_season": "2024"
+  },
+  "TEN": {
+    "starter_id": "00-0025565",
+    "starter_name": "N.Folk",
+    "as_of_season": "2024"
+  },
+  "WAS": {
+    "starter_id": "00-0035145",
+    "starter_name": "A.Seibert",
+    "as_of_season": "2024"
+  }
+}
