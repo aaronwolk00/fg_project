@@ -217,6 +217,44 @@
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
     <!-- Left controls -->
     <aside class="lg:col-span-4 space-y-4">
+      <!-- LEFT-RAIL: Team & Kicker selectors (place above Scenario card) -->
+<section class="card card-pad" id="teamKickerCard">
+  <h2 class="text-sm font-semibold mb-3">Team & Kicker</h2>
+  <div class="grid grid-cols-1 gap-3">
+    <div>
+      <label class="label" for="teamSelectLR">Team</label>
+      <select id="teamSelectLR" class="input" aria-label="Select Team (Left)">
+        <option value="">— select —</option>
+      </select>
+    </div>
+    <div>
+      <label class="label" for="kickerSelectLR">Kicker <span class="text-ink-400">(starter in parentheses)</span></label>
+      <select id="kickerSelectLR" class="input" aria-label="Select Kicker (Left)" disabled>
+        <option value="">— select team first —</option>
+      </select>
+      <p class="text-[11px] mt-1 text-ink-500">Inactive kickers are grayed out.</p>
+    </div>
+    <div class="mt-3">
+      <label class="label" for="stadiumSelectLR">Stadium</label>
+      <select id="stadiumSelectLR" class="input" aria-label="Select Stadium (Left)" disabled>
+        <option value="">— select team first —</option>
+      </select>
+      <p class="text-[11px] mt-1 text-ink-500">Selecting a venue sets indoor/outdoor and altitude automatically.</p>
+    </div>
+  </div>
+</section>
+
+<!-- OPTIONAL: Wind direction segmented (place under Context or Scenario if desired) -->
+<section class="card card-pad" id="windDirCard">
+  <h2 class="text-sm font-semibold mb-3">Wind Direction</h2>
+  <div class="seg" role="tablist" aria-label="Wind Direction">
+    <button class="on"   data-dir="calm"   aria-pressed="true">Calm</button>
+    <button class="off"  data-dir="head">Head</button>
+    <button class="off"  data-dir="tail">Tail</button>
+    <button class="off"  data-dir="crossL">Cross ⟵</button>
+    <button class="off"  data-dir="crossR">Cross ⟶</button>
+  </div>
+</section>
       <!-- Query controls -->
       <section class="card card-pad">
         <h2 class="text-sm font-semibold mb-3">Scenario</h2>
@@ -276,6 +314,43 @@
           </div>
         </div>
       </section>
+
+      <section class="card card-pad" id="advancedCtxCard">
+        <h2 class="text-sm font-semibold mb-3">Advanced Context</h2>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="label" for="downSel">Down</label>
+            <select id="downSel" class="input">
+              <option value="1">1st</option>
+              <option value="2">2nd</option>
+              <option value="3">3rd</option>
+              <option value="4" selected>4th</option>
+            </select>
+          </div>
+          <div>
+            <label class="label" for="ytgExact">Yards to go</label>
+            <input id="ytgExact" class="input" type="number" min="0" max="40" step="1" value="5">
+          </div>
+          <div>
+            <label class="label" for="timeMMSS">Time remaining (mm:ss)</label>
+            <input id="timeMMSS" class="input" type="text" placeholder="07:30">
+          </div>
+          <div>
+            <label class="label" for="scoreDiffExact">Score diff (off − def)</label>
+            <input id="scoreDiffExact" class="input" type="number" step="1" value="0">
+          </div>
+          <div>
+            <label class="label" for="toOff">Timeouts (off)</label>
+            <input id="toOff" class="input" type="number" min="0" max="3" value="3">
+          </div>
+          <div>
+            <label class="label" for="toDef">Timeouts (def)</label>
+            <input id="toDef" class="input" type="number" min="0" max="3" value="3">
+          </div>
+        </div>
+        <p class="text-[11px] mt-2 text-ink-500">Exact inputs override bins for decisions; Attempt% still uses nearest bins.</p>
+      </section>
+      
 
       <!-- Notes/help -->
       <section class="card card-pad">
@@ -479,8 +554,13 @@
     // --- Bootstrap
     (async function init(){
       setEnv('indoor');
-      const roster = await loadRoster();
-      populateTeamAndKicker(roster);
+      try{
+        const ds = window.FG?.DataStore;
+        if(!(ds && ds.getTeams)){
+          const roster = await loadRoster();
+          populateTeamAndKicker(roster);
+        }
+      }catch{}
       // Versions (try to read manifest if present)
       try{
         const man = await fetch('./manifest.json', {cache:'no-store'}).then(r=>r.ok?r.json():null);
@@ -641,6 +721,7 @@
           deltasByDist: base + '/kicker_deltas_by_distance.json',
           sens:  base + '/attempt_sensitivity.json',
           roster: base + '/nfl_kicker_roster.json',
+          stadiums: '/stadiums.json',
           manifest: base + '/manifest.json'
         };
   
@@ -796,7 +877,17 @@
     function sigmoid(x){ return 1/(1+Math.exp(-x)); }
   
     // Expose class too (for testing), but keep singleton on FG.DataStore from init()
+    window.FG = window.FG || {};
     window.FG.DataStoreClass = DataStore;
+
+    (async () => {
+      if (!window.FG.DataStore) {
+        window.FG.DataStore = await DataStore.init({ baseUrl: '.' });
+      }
+      // Emit once so listeners render with defaults
+      window.state = window.state || {};
+      window.dispatchEvent(new CustomEvent('fg:stateChanged', { detail: { ...window.state }}));
+    })();
   })();
   </script>
 
@@ -807,37 +898,7 @@ Paste the <script> block near the end of index.html, AFTER Part 2 (Data Loader) 
 All IDs coexist with Part 1; this adds a left-rail selector and syncs with top-bar selects.
 ========================= -->
 
-<!-- LEFT-RAIL: Team & Kicker selectors (place above Scenario card) -->
-<section class="card card-pad" id="teamKickerCard">
-  <h2 class="text-sm font-semibold mb-3">Team & Kicker</h2>
-  <div class="grid grid-cols-1 gap-3">
-    <div>
-      <label class="label" for="teamSelectLR">Team</label>
-      <select id="teamSelectLR" class="input" aria-label="Select Team (Left)">
-        <option value="">— select —</option>
-      </select>
-    </div>
-    <div>
-      <label class="label" for="kickerSelectLR">Kicker <span class="text-ink-400">(starter in parentheses)</span></label>
-      <select id="kickerSelectLR" class="input" aria-label="Select Kicker (Left)" disabled>
-        <option value="">— select team first —</option>
-      </select>
-      <p class="text-[11px] mt-1 text-ink-500">Inactive kickers are grayed out.</p>
-    </div>
-  </div>
-</section>
 
-<!-- OPTIONAL: Wind direction segmented (place under Context or Scenario if desired) -->
-<section class="card card-pad" id="windDirCard">
-  <h2 class="text-sm font-semibold mb-3">Wind Direction</h2>
-  <div class="seg" role="tablist" aria-label="Wind Direction">
-    <button class="on"   data-dir="calm"   aria-pressed="true">Calm</button>
-    <button class="off"  data-dir="head">Head</button>
-    <button class="off"  data-dir="tail">Tail</button>
-    <button class="off"  data-dir="crossL">Cross ⟵</button>
-    <button class="off"  data-dir="crossR">Cross ⟶</button>
-  </div>
-</section>
 
 <!-- =========================
   SCRIPT: Wiring for selectors + slider paint + event emission
@@ -1382,7 +1443,14 @@ Canvas-based attempt chart + coupling, with compare Starter vs Backup toggle.
   
       _calcSeries(){
         const ds=this.ds, st=this.state; if(!ds||!st) return null;
-        const env=st.env||'indoor', s=st.scoreBin||'close', t=st.timeBin||'mid', y=st.ytgBin||'med';
+        const env = st.env || 'indoor';
+        function binsFromExact(score, sec, ytg){
+          const s = (score<=-3) ? 'trail' : (score>=3 ? 'lead' : 'close');
+          const t = (sec<=240) ? 'late'  : (sec<=660 ? 'mid' : 'early'); // <=4:00 late; <=11:00 mid
+          const y = (ytg<=3)   ? 'short' : (ytg<=6   ? 'med' : 'long');
+          return { s, t, y };
+        }
+        const { s, t, y } = binsFromExact(st.scoreDiffExact ?? 0, st.timeRemSec ?? 900, st.ytgExact ?? 5);
         const {starter, backup} = this._findStarterAndBackup();
         const kid = st.kicker || starter?.id || null;
   
@@ -1566,52 +1634,67 @@ Paste this <script> block near the end of index.html AFTER Parts 1–5.
     }
   
     function computeEdges(ds, st){
-      const env=st.env||'indoor', d=clamp(Math.round(st.distance||45), 18, 68);
-      const s=st.scoreBin||'close', t=st.timeBin||'mid', y=st.ytgBin||'med';
-      const yard100 = clamp(d-17, 1, 99);
-  
+      const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+      const env = st.env || 'indoor';
+      const d   = clamp(Math.round(st.distance||45), 18, 68);
+      const yard100 = clamp(d - 17, 1, 99);
+
+      // Exacts
+      const down = clamp(+st.down||4, 1, 4);
+      const ytg  = clamp(+st.ytgExact||5, 0, 40);
+      const sec  = clamp(+st.timeRemSec||900, 0, 1800);
+      const sd   = (+st.scoreDiffExact)||0;
+      const toO  = clamp(+st.toOff||3, 0, 3);
+      const toD  = clamp(+st.toDef||3, 0, 3);
+
+      // Make league & kicker
       const pL = ds.getMakeProb({ env, distance:d, temp_F:st.tempF||60, wind_mph:st.wind||0 });
       const del = ds.getKickerDeltaLogit(st.kicker||null, d) || {delta_logit:0, se:0};
-      const w = 1 / (1 + Math.pow((+del.se||0)/0.8, 2)); // shrink on noisy deltas (same as Make chart)
-      const pK = sigmoid(logit(pL) + (+del.delta_logit||0) * w);
-  
-      // Try WP edges first
-      const wp = lookupWP(env, d, s, t, y);
-      if(wp){
-        // Expect fields like edge_fg_go_mean / _p10 / _p90 etc. If absent, compute from provided make/attempt.
-        const fgGo = (wp.edge_fg_go_mean!=null) ? wp.edge_fg_go_mean : null;
-        const fgPunt = (wp.edge_fg_punt_mean!=null) ? wp.edge_fg_punt_mean : null;
-        const ciFGGo = (wp.edge_fg_go_p10!=null && wp.edge_fg_go_p90!=null) ? {lo:wp.edge_fg_go_p10, hi:wp.edge_fg_go_p90} : null;
-        const ciFGPu = (wp.edge_fg_punt_p10!=null && wp.edge_fg_punt_p90!=null) ? {lo:wp.edge_fg_punt_p10, hi:wp.edge_fg_punt_p90} : null;
-  
+      const w = 1 / (1 + Math.pow((+del.se||0)/0.8, 2));
+      const pK = 1/(1+Math.exp(-(Math.log(pL/(1-pL)) + (+del.delta_logit||0)*w)));
+
+      // Try WP file by nearest bins (fallback if not present)
+      const s = (sd<=-3)?'trail':(sd>=3?'lead':'close');
+      const t = (sec<=240)?'late':(sec<=660?'mid':'early');
+      const y = (ytg<=3)?'short':(ytg<=6?'med':'long');
+      const wp = (typeof lookupWP==='function') ? lookupWP(env, d, s, t, y) : null;
+      if (wp){
         return {
-          metric: 'WP', unit: 'pp',
-          p_league: pL, p_kicker: pK,
-          actions: {
-            FG_vs_Go: { mean: fgGo, ci: ciFGGo },
-            FG_vs_Punt: { mean: fgPunt, ci: ciFGPu }
+          metric:'WP', unit:'pp',
+          p_league:pL, p_kicker:pK,
+          actions:{
+            FG_vs_Go:   { mean: wp.edge_fg_go_mean ?? null,   ci: (wp.edge_fg_go_p10!=null&&wp.edge_fg_go_p90!=null)?{lo:wp.edge_fg_go_p10,hi:wp.edge_fg_go_p90}:null },
+            FG_vs_Punt: { mean: wp.edge_fg_punt_mean ?? null, ci: (wp.edge_fg_punt_p10!=null&&wp.edge_fg_punt_p90!=null)?{lo:wp.edge_fg_punt_p10,hi:wp.edge_fg_punt_p90}:null }
           }
         };
       }
-  
-      // Fallback: EP proxy
+
+      // EP proxy (distance-aware + exacts)
       const EP_kick = 3 * pK;
-      const EP_go   = ep_go_from_yardline(yard100);
-      const EP_punt = ep_punt_from_yardline(yard100);
-  
-      const fg_go_edge = EP_kick - EP_go;
-      const fg_pu_edge = EP_kick - EP_punt;
-  
+      let EP_go = 6.0 - 0.08*yard100;         // base by yardline
+      EP_go -= 0.15*Math.max(0, ytg-3);       // harder with long YTG
+      EP_go -= (down>=3 ? 0.35 : 0);
+      EP_go -= (down===4 ? 0.60 : 0);
+      EP_go += 0.05*Math.max(0, 3 - toO);     // fewer TOs hurts
+      EP_go += (sec<=120 ? -0.40 : 0);        // end-of-half
+      EP_go += (sd>=7 ? -0.10 : (sd<=-7 ? 0.10 : 0));
+      EP_go = Math.max(0.5, Math.min(6.5, EP_go));
+
+      let EP_punt = -0.2 - 0.015*(50 - yard100); // opp-territory punts worse
+      EP_punt += (sec<=180 ? -0.25 : 0);
+      EP_punt = Math.max(-1.25, Math.min(0.2, EP_punt));
+
       return {
-        metric: 'EP', unit: 'pts',
-        p_league: pL, p_kicker: pK,
-        actions: {
-          FG_vs_Go: { mean: fg_go_edge, ci: null },
-          FG_vs_Punt: { mean: fg_pu_edge, ci: null }
+        metric:'EP', unit:'pts',
+        p_league:pL, p_kicker:pK,
+        actions:{
+          FG_vs_Go:   { mean: (EP_kick - EP_go),   ci: null },
+          FG_vs_Punt: { mean: (EP_kick - EP_punt), ci: null }
         },
-        ep_breakdown: { EP_kick, EP_go, EP_punt, yardline_100: yard100 }
+        ep_breakdown:{ EP_kick, EP_go, EP_punt, yardline_100:yard100, down, ytg, sec, sd, toO, toD }
       };
     }
+
   
     // ---------- UI rendering ----------
     function ensurePanel(){
@@ -1764,6 +1847,161 @@ Paste this <script> block near the end of index.html AFTER Parts 1–5.
   })();
   </script>
   
+  <script id="fg-bootstrap-selectors-stadiums">
+    (function(){
+      async function textFetch(url){ try{ const r=await fetch(url+'?v='+Date.now()); if(!r.ok) return null; return await r.text(); }catch{ return null; } }
+      // Minimal CSV parser (handles quotes/commas)
+      function parseCSVRow(line){ let out=[],cur='',q=false; for(let i=0;i<line.length;i++){const c=line[i]; if(q){ if(c=='"'){ if(line[i+1]=='"'){cur+='"'; i++;} else {q=false;} } else {cur+=c;} } else { if(c=='"'){q=true;} else if(c==','){ out.push(cur); cur=''; } else { cur+=c; } } } out.push(cur); return out.map(s=>s.trim()); }
+      function parseCSV(txt){ if(!txt) return []; const lines=txt.replace(/\r/g,'').split('\n').filter(l=>l.trim()); if(!lines.length) return []; const head=parseCSVRow(lines.shift()); return lines.map(l=>{const c=parseCSVRow(l),o={}; head.forEach((h,i)=>o[h]=c[i]??''); return o;}); }
+    
+      const ds = window.FG?.DataStore || {};
+    
+      // ----- Roster getters (from nfl_kicker_roster.json if DataStore didn’t define them) -----
+      async function ensureRosterGetters(){
+        if (ds.getTeams && ds.getKickersByTeam && ds.getStarterForTeam) return;
+        let roster = ds.roster || null;
+        if (!roster) { try{ roster = await fetch('./nfl_kicker_roster.json?v='+Date.now()).then(r=>r.json()); }catch{} }
+        if (!Array.isArray(roster)) { console.warn('Roster JSON missing'); return; }
+        const byTeam = new Map();
+        for (const r of roster){
+          const t=(r.team||r.posteam||r.team_abbr||r.Team||'').toUpperCase(); if(!t) continue;
+          const name = r.kicker_name || r.player || r.name || r.full_name || r.Player || '';
+          const kid  = String(r.kicker_id || r.player_id || r.gsis_id || name);
+          const status = String(r.status||r.note||'active');
+          const depth = String(r.depth||r.depth_chart||r.depth_order||r.dc_rank||r.depth_chart_order||'');
+          const isStarter = /(^1$|K1|starter|primary)/i.test(depth) || String(r.is_starter).toLowerCase()==='true';
+          const active = !/inactive|ir|retired/i.test(status);
+          const row = { id:kid, name, active, isStarter };
+          if(!byTeam.has(t)) byTeam.set(t, []);
+          byTeam.get(t).push(row);
+        }
+        ds.getTeams = ()=> Array.from(byTeam.keys()).sort();
+        ds.getKickersByTeam = (team)=> (byTeam.get((team||'').toUpperCase()) || []).sort((a,b)=> (b.isStarter - a.isStarter) || a.name.localeCompare(b.name));
+        ds.getStarterForTeam = (team)=> (ds.getKickersByTeam(team)[0] || null);
+        window.FG.DataStore = Object.assign(window.FG.DataStore||{}, ds);
+      }
+    
+      // ----- Stadiums from CSV (your ui/team_stadiums.csv) -----
+      async function ensureStadiums(){
+        if (ds.getStadiums && ds.inferVenue) return;
+        let rows=[]; const txt = await textFetch('./team_stadiums.csv'); if(txt) rows = parseCSV(txt);
+        ds.getStadiums = function(team){
+          const T=(team||'').toUpperCase();
+          return rows.filter(r => String(r.team||r.team_fastr||'').toUpperCase()===T);
+        };
+        ds.inferVenue = function(team){
+          const list = ds.getStadiums(team); if(!list.length) return null;
+          const cur = list.find(s => String(s.is_current).toLowerCase()==='true') || list[0];
+          const roof = String(cur.roof_type||'').toLowerCase();
+          const env = (roof.includes('dome') || roof.includes('retract')) ? 'indoor' : 'outdoor';
+          const alt = Number(cur.altitude||cur.altitude_m||0) || 0;
+          return { id: cur.stadium || cur.stadium_name || cur.team_fastr, name: cur.stadium_name||cur.stadium, env, altitude_m: alt, raw: cur };
+        };
+        window.FG.DataStore = Object.assign(window.FG.DataStore||{}, ds);
+      }
+    
+      // ----- UI wiring -----
+      function option(label,value){ const o=document.createElement('option'); o.textContent=label; o.value=value; return o; }
+      function fillTeams(){
+        const el=document.getElementById('teamSelect'); if(!el||!ds.getTeams) return;
+        const teams = ds.getTeams(); el.innerHTML=''; el.appendChild(option('— select —',''));
+        teams.forEach(t=> el.appendChild(option(t,t)));
+      }
+      function fillKickers(team){
+        const el=document.getElementById('kickerSelect'); if(!el||!ds.getKickersByTeam) return;
+        const list = ds.getKickersByTeam(team); el.innerHTML='';
+        if(!list.length){ el.appendChild(option('— none —','')); el.disabled=true; return; }
+        el.disabled=false;
+        list.forEach(k=>{
+          const lab = k.name + (k.isStarter?' (starter)':'') + (k.active?'':' [inactive]');
+          const opt = option(lab, k.id); if(!k.active) opt.disabled=true; el.appendChild(opt);
+        });
+      }
+      function fillStadiums(team){
+        const el=document.getElementById('stadiumSelectLR'); if(!el||!ds.getStadiums) return;
+        const venues = ds.getStadiums(team); el.innerHTML='';
+        if(!venues.length){ el.appendChild(option('— no stadiums —','')); el.disabled=true; return; }
+        el.disabled=false;
+        venues.forEach(v=>{ const nm=v.stadium_name||v.stadium||v.team_fastr; const id=v.stadium||nm; el.appendChild(option(nm,id)); });
+      }
+      function emit(){ window.dispatchEvent(new CustomEvent('fg:stateChanged', { detail: {...(window.state||{})} })); }
+    
+      function bindEvents(){
+        const teamSel = document.getElementById('teamSelect');
+        const kickSel = document.getElementById('kickerSelect');
+        const stadSel = document.getElementById('stadiumSelectLR');
+        if(teamSel){
+          teamSel.addEventListener('change', ()=>{
+            const t = teamSel.value||''; window.state = window.state || {}; window.state.team = t;
+            fillKickers(t);
+            const starter = ds.getStarterForTeam && ds.getStarterForTeam(t);
+            if (starter && kickSel){ kickSel.value = starter.id; window.state.kicker = starter.id; }
+            fillStadiums(t);
+            const v = ds.inferVenue && ds.inferVenue(t);
+            if (v){
+              window.state.stadiumId  = v.id;
+              window.state.env        = v.env;
+              window.state.altitude_m = v.altitude_m || 0;
+              if (stadSel){ stadSel.value = v.id; }
+
+              // Reflect altitude seg (Sea/Mid/High)
+              const altSeg = document.querySelector('[aria-label="Altitude"]');
+              if (altSeg){
+                const bin = (window.state.altitude_m >= 1200) ? 'high'
+                          : (window.state.altitude_m >= 300)  ? 'mid'
+                          : 'sea';
+                [...altSeg.querySelectorAll('button[data-alt]')].forEach(b=>{
+                  const on = b.dataset.alt===bin;
+                  b.classList.toggle('on', on);
+                  b.classList.toggle('off', !on);
+                });
+              }
+            }
+            emit();
+          });
+        }
+        if(kickSel){ kickSel.addEventListener('change', ()=>{ window.state = window.state||{}; window.state.kicker = kickSel.value||''; emit(); }); }
+        if(stadSel){ stadSel.addEventListener('change', ()=>{ window.state = window.state||{}; window.state.stadiumId = stadSel.value||''; const vs = ds.getStadiums && ds.getStadiums(window.state.team||''); const v = vs? vs.find(s => (s.stadium||s.stadium_name)===window.state.stadiumId) : null; if(v){ const roof=String(v.roof_type||'').toLowerCase(); window.state.env = (roof.includes('dome')||roof.includes('retract'))?'indoor':'outdoor'; window.state.altitude_m = Number(v.altitude||v.altitude_m||0)||0; } emit(); }); }
+      }
+    
+      async function init(){ await ensureRosterGetters(); await ensureStadiums(); fillTeams(); bindEvents(); }
+      if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init); else init();
+    })();
+    </script>
+    
+    <script>
+      (function(){
+        const downSel   = document.getElementById('downSel');
+        const ytgExact  = document.getElementById('ytgExact');
+        const timeMMSS  = document.getElementById('timeMMSS');
+        const scoreEx   = document.getElementById('scoreDiffExact');
+        const toOff     = document.getElementById('toOff');
+        const toDef     = document.getElementById('toDef');
+      
+        window.state = Object.assign({
+          down:4, ytgExact:5, timeRemSec:450, scoreDiffExact:0, toOff:3, toDef:3
+        }, window.state||{});
+      
+        function parseMMSS(s){
+          const m = /^\s*(\d{1,2})\s*:\s*(\d{2})\s*$/.exec(String(s||'')); if(!m) return null;
+          return Math.max(0, (+m[1])*60 + (+m[2]));
+        }
+      
+        function sync(){
+          const st = window.state;
+          st.down = +downSel.value || 4;
+          st.ytgExact = Math.max(0, +ytgExact.value||0);
+          st.scoreDiffExact = +scoreEx.value || 0;
+          st.toOff = Math.max(0, Math.min(3, +toOff.value||0));
+          st.toDef = Math.max(0, Math.min(3, +toDef.value||0));
+          const secs = parseMMSS(timeMMSS.value); if(secs!=null) st.timeRemSec = secs;
+          window.dispatchEvent(new CustomEvent('fg:stateChanged', { detail: {...st} }));
+        }
+      
+        [downSel, ytgExact, timeMMSS, scoreEx, toOff, toDef].forEach(el=> el && el.addEventListener('input', sync));
+      })();
+      </script>
+      
 
 </body>
 </html>
