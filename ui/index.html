@@ -1001,13 +1001,50 @@ All IDs coexist with Part 1; this adds a left-rail selector and syncs with top-b
     set(state.windDir||'calm');
   }
 
+  async function fetchText(url){
+  try{ const r = await fetch(url, {cache:'no-store'}); if(!r.ok) return null; return await r.text(); }catch{ return null; }
+}
+function parseCSVRow(line){
+  let out=[],cur='',q=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(q){ if(c=='"'){ if(line[i+1]=='"'){cur+='"';i++;} else {q=false;} } else {cur+=c;} }
+    else { if(c=='"'){q=true;} else if(c==','){ out.push(cur); cur=''; } else {cur+=c;} }
+  }
+  out.push(cur); return out.map(s=>s.trim());
+}
+function parseCSV(txt){
+  if(!txt) return {head:[],rows:[]};
+  const lines = txt.replace(/\r/g,'').split('\n').filter(l=>l.trim());
+  const head = parseCSVRow(lines.shift());
+  const rows = lines.map(l=>parseCSVRow(l));
+  return { head, rows };
+}
+async function deriveTeamsFromDepthCharts(csvUrl){
+  const txt = await fetchText(csvUrl); if(!txt) return null;
+  const { head, rows } = parseCSV(txt);
+  const idx = Object.fromEntries(head.map((h,i)=>[h,i]));
+  const set = new Set();
+  for(const r of rows){
+    const code = r[idx.club_code] || r[idx.club] || r[idx.team] || '';
+    if(code) set.add(code.toUpperCase());
+  }
+  const list = Array.from(set).sort();
+  return list.length ? list : null;
+}
+
+
   // ---------- Populate from DataStore ----------
   async function initSelectors(){
     // Ensure DataStore is ready
     const ds = window.FG.DataStore || await window.FG.DataStoreClass?.init?.({ baseUrl: '.' }) || null;
 
     // Teams
-    const teams = ds?.getTeams?.() || NFL_TEAMS;
+    let teams = ds?.getTeams?.() ?? [];
+    if (!teams.length) {
+      teams = (await deriveTeamsFromDepthCharts('./depth_charts.csv')) ?? [];
+    }
+    if (!teams.length) teams = NFL_TEAMS;
     if(teamTop){
       teamTop.innerHTML = ''; teamTop.appendChild(option('— select —',''));
       for(const t of teams){ teamTop.appendChild(option(t,t)); }
@@ -1858,7 +1895,9 @@ Paste this <script> block near the end of index.html AFTER Parts 1–5.
     
       // ----- Roster getters (from nfl_kicker_roster.json if DataStore didn’t define them) -----
       async function ensureRosterGetters(){
-        if (ds.getTeams && ds.getKickersByTeam && ds.getStarterForTeam) return;
+        if (ds.getTeams && ds.getKickersByTeam && ds.getStarterForTeam) {
+          try { if ((ds.getTeams()||[]).length) return; } catch {}
+        }
         let roster = ds.roster || null;
         if (!roster) { try{ roster = await fetch('./nfl_kicker_roster.json?v='+Date.now()).then(r=>r.json()); }catch{} }
         if (!Array.isArray(roster)) { console.warn('Roster JSON missing'); return; }
