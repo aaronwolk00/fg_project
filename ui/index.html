@@ -317,52 +317,6 @@
         </div>
       </section>
 
-      <!-- Context controls (Attempt model) -->
-      <section class="card card-pad">
-        <h2 class="text-sm font-semibold mb-3">Context</h2>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="label" for="scoreBin">Score</label>
-            <select id="scoreBin" class="input">
-              <option value="trail">Trail</option>
-              <option value="close" selected>Close</option>
-              <option value="lead">Lead</option>
-            </select>
-          </div>
-          <div>
-            <label class="label" for="timeBin">Time in Half</label>
-            <select id="timeBin" class="input">
-              <option value="early">Early</option>
-              <option value="mid" selected>Mid</option>
-              <option value="late">Late</option>
-            </select>
-          </div>
-          <div>
-            <label class="label" for="ytgBin">Yards to Gain</label>
-            <select id="ytgBin" class="input">
-              <option value="short">Short</option>
-              <option value="med" selected>Medium</option>
-              <option value="long">Long</option>
-            </select>
-          </div>
-          <div class="flex items-end">
-            <span class="pill">4th Down</span>
-          </div>
-        </div>
-      </section>
-
-      
-      
-
-      <!-- Notes/help -->
-      <section class="card card-pad">
-        <h2 class="text-sm font-semibold mb-2">Notes</h2>
-        <ul class="text-sm list-disc ml-5 space-y-1 text-ink-700">
-          <li>Starter kicker appears in parentheses once depth charts load.</li>
-          <li>Charts render after data loads (grid JSONs).</li>
-          <li>This is the <strong>shell</strong>: logic hooks are stubbed and ready.</li>
-        </ul>
-      </section>
     </aside>
 
     <!-- Right content -->
@@ -1821,9 +1775,6 @@ Canvas-based attempt chart + coupling, with compare Starter vs Backup toggle.
         sw(8, 28, '#10b981', `${stName} (coupled)`);
         if(this.compare && series.backup) sw(8, 46, '#f43f5e', `${series.backup.name||'Backup'} (coupled)`);
   
-        // Context label (score/time/ytg)
-        const st=this.state||{}; const ctxLabel=`${st.scoreBin||'close'} • ${st.timeBin||'mid'} • ${st.ytgBin||'med'} • ${st.env||'indoor'}`;
-        ctx.fillStyle='#334155'; ctx.textAlign='right'; ctx.fillText(ctxLabel, w-8, 16);
   
         ctx.restore();
       }
