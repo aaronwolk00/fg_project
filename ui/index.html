@@ -171,7 +171,7 @@
 </head>
 <body class="min-h-screen bg-ink-50 text-ink-900">
     <header class="sticky top-0 z-40 bg-white border-b border-ink-200">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-3">
+      <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-3">
         <div class="flex items-center gap-2">
           <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-white font-bold">FG</span>
           <h1 class="text-base sm:text-lg font-semibold">FG Pro UI v4</h1>
@@ -214,7 +214,7 @@
   </header>
 
   <!-- Main layout -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
+  <main class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
     <!-- Left controls -->
     <aside class="lg:col-span-4 space-y-4">
       <!-- LEFT-RAIL: Team & Kicker selectors (place above Scenario card) -->
@@ -394,22 +394,6 @@
 
     </section>
   </main>
-
-  <!-- Sticky footer status bar -->
-  <footer class="sticky bottom-0 z-40 border-t border-ink-200 bg-white/90 backdrop-blur">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-xs text-ink-600 flex items-center gap-3">
-      <div class="flex items-center gap-2">
-        <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-        <span id="statusText">Ready</span>
-      </div>
-      <div class="flex-1"></div>
-      <div class="hidden sm:flex items-center gap-3">
-        <span class="pill">Data: <span id="dataVersion" class="ml-1 font-semibold">—</span></span>
-        <span class="pill">Schema: <span id="schemaVersion" class="ml-1 font-semibold">—</span></span>
-        <span class="pill">UI: v4 shell</span>
-      </div>
-    </div>
-  </footer>
 
   <!-- Vanilla JS: lightweight state + stubs -->
   <script>
@@ -803,31 +787,37 @@
       _applyVenueAdjustments({ stadiumId=null, env='indoor', distance, temp_F=60,
                               wind_mph=0, wind_head_mps=0, wind_cross_mps=0,
                               altitude_m=0 }) {
-        // Wind attenuation by roof type; indoor = no wind
-        // Tunables: retractable roofs still dampen wind quite a bit.
+        // Wind attenuation by roof type
         let windMult = (env === 'indoor') ? 0 : 1;
-
         try {
           const v = this.getVenueById?.(stadiumId);
           const roof = String(v?.roof_type || '').toLowerCase();
           if (env !== 'indoor') {
             if (roof.includes('retract')) windMult = 0.35;
-            if (roof.includes('dome'))    windMult = 0; // safety
+            if (roof.includes('dome'))    windMult = 0;
           }
         } catch {}
 
+        // apply attenuation
         wind_mph       *= windMult;
         wind_head_mps  *= windMult;
         wind_cross_mps *= windMult;
 
-        // If the make grid has NO altitude axis, apply a light physics-y correction:
-        // air density drops with altitude ⇒ longer carry ⇒ effectively shorter kick.
-        // adr ≈ exp(-alt/8500 m); carry ~ adr^-0.5 ⇒ scale distance by 1/carry.
-        const hasAltAxis = (this._make?.schema >= 2);
-        if (!hasAltAxis && altitude_m) {
+        // --- NEW: if the grid lacks wind direction, fold direction into distance ---
+        // (so headwind lengthens the effective kick; tailwind shortens it; cross ≈ small penalty)
+        if (!this.hasDirAxis && (wind_head_mps || wind_cross_mps)) {
+          const head_mph  = wind_head_mps / 0.44704;           // + = headwind, - = tailwind
+          const cross_mph = Math.abs(wind_cross_mps) / 0.44704;
+          const kHead  = 0.18;  // ~+/-0.18 yards per 1 mph head/tail
+          const kCross = 0.06;  // ~+0.06 yards per 1 mph cross
+          distance = distance + kHead*head_mph + kCross*cross_mph;
+        }
+
+        // If no altitude axis, apply carry correction
+        if (!this.hasAltAxis && altitude_m) {
           const adr   = Math.exp(-(Number(altitude_m)||0)/8500);
           const carry = Math.pow(adr, -0.5);
-          distance = distance / carry; // “effective” distance
+          distance = distance / carry;
         }
 
         return { distance, temp_F, wind_mph, wind_head_mps, wind_cross_mps, altitude_m };
@@ -871,11 +861,33 @@
       constructor(base, files, make, attempt, deltas, sens, roster, manifest){
         this.base = base; this.files = files; this._make = make; this._attempt = attempt;
         this._deltas = deltas; this._sens = sens; this._roster = roster; this._manifest = manifest;
+        this.hasDirAxis = !!(
+          (make.schema >= 2) &&
+          (
+            (make.byEnv.indoor?.[0] && ('wind_head_mps' in make.byEnv.indoor[0] || 'wind_cross_mps' in make.byEnv.indoor[0])) ||
+            (make.byEnv.outdoor?.[0] && ('wind_head_mps' in make.byEnv.outdoor[0] || 'wind_cross_mps' in make.byEnv.outdoor[0]))
+          )
+        );
+        this.hasAltAxis = !!(
+          (make.schema >= 2) &&
+          (
+            (make.byEnv.indoor?.[0] && ('altitude_m' in make.byEnv.indoor[0])) ||
+            (make.byEnv.outdoor?.[0] && ('altitude_m' in make.byEnv.outdoor[0]))
+          )
+        );
         // Build simple indexes for performance
         this._makeIdx = { indoor: new Map(), outdoor: new Map() };
         for(const env of ['indoor','outdoor']){
           for(const r of (make.byEnv[env]||[])){
-            const key = this._mkKey(env, r.distance, r.temp_F, r.wind_mph, r.wind_head_mps, r.wind_cross_mps, r.altitude_m);
+            const key = this._mkKey({
+              env,
+              distance: r.distance,
+              tF: r.temp_F,
+              wMph: r.wind_mph,
+              wHead: r.wind_head_mps,
+              wCross: r.wind_cross_mps,
+              alt: r.altitude_m
+            });
             this._makeIdx[env].set(key, r);
           }
         }
@@ -890,18 +902,20 @@
       }
   
       // ----------- keys -----------
-      _mkKey(env, d, tF, wMph, wHead, wCross, alt){
-        const dR = Math.round(+d);
-        const tR = Math.round(+tF/5)*5;     // 5°F grid typical
-        const wR = Math.round(+wMph/2)*2;   // 2 mph grid typical
+      _mkKey({ env, distance, tF, wMph, wHead, wCross, alt }){
+        const dR = Math.round(+distance);
+        const tR = Math.round(+tF/5)*5;       // 5°F bins
+        const wR = Math.round(+wMph/2)*2;     // 2 mph bins
         const hR = Math.round((+wHead||0)*1000)/1000;
         const cR = Math.round((+wCross||0)*1000)/1000;
-        const aR = Math.round((+alt||0)/50)*50; // 50m buckets
-        return [env,dR,tR,wR,hR,cR,aR].join('|');
-      }
-      _atKey(env, d, s, t, y, h){
-        const dR = Math.round(+d);
-        return [env,dR,s,t,y,h||''].join('|');
+        const aR = Math.round((+alt||0)/50)*50;
+
+        // Build key parts only for axes the grid actually has
+        const parts = [env, dR, tR];
+        if (this.hasDirAxis) parts.push(wR, hR, cR);
+        else                 parts.push(wR);
+        if (this.hasAltAxis) parts.push(aR);
+        return parts.join('|');
       }
   
       // ----------- getters -----------
@@ -954,15 +968,15 @@
           keyAltMeters = 0;
         }
 
-        const key = this._mkKey(
+        const key = this._mkKey({
           env,
-          adj.distance,
-          adj.temp_F,
-          keyWindMph,
-          keyHeadMps,
-          keyCrossMps,
-          keyAltMeters
-        );
+          distance: adj.distance,
+          tF: adj.temp_F,
+          wMph: adj.wind_mph,
+          wHead: adj.wind_head_mps,
+          wCross: adj.wind_cross_mps,
+          alt: adj.altitude_m
+        });
 
         // 3) Lookup (with distance-only fallback)
         let row = this._makeIdx[env].get(key);
@@ -2082,18 +2096,17 @@ Paste this <script> block near the end of index.html AFTER Parts 1–5.
     function ensurePanel(){
       const tab = document.getElementById('decisionTab') || document.getElementById('edgePanel') || document.getElementById('decisionPanel');
       if(!tab) return null;
-      // main panel
-      let wrap = document.getElementById('fgEdgeWrap');
-      if(!wrap){
-        wrap = document.createElement('div'); wrap.id='fgEdgeWrap'; wrap.className='grid grid-cols-1 lg:grid-cols-2 gap-4';
-        tab.innerHTML=''; tab.appendChild(wrap);
-      }
-      // cards
+
       let card = document.getElementById('fgEdgeCard');
-      if(!card){ card = document.createElement('section'); card.id='fgEdgeCard'; card.className='card card-pad'; wrap.appendChild(card); }
-      let about = document.getElementById('fgAboutCard');
-      if(!about){ about = document.createElement('section'); about.id='fgAboutCard'; about.className='card card-pad'; wrap.appendChild(about); }
-      return { card, about };
+      if(!card){
+        // single, full-width card
+        tab.innerHTML = '';
+        card = document.createElement('section');
+        card.id = 'fgEdgeCard';
+        card.className = 'card card-pad';
+        tab.appendChild(card);
+      }
+      return { card };
     }
   
     function fmt(x, unit){
