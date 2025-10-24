@@ -65,14 +65,14 @@
       border-radius: 0.75rem; 
       box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04); 
     } 
-    .card-pad { padding: 1rem; }
+    .card-pad { padding: 0.75rem; }
 
     .btn { 
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      border-radius: 0.75rem;
-      padding: 0.5rem 0.75rem;
+      border-radius: 0.6rem;
+      padding: 0.4rem 0.6rem;
       font-size: 0.875rem;
       font-weight: 500;
       /* transition and active:scale-[] properties are complex to emulate purely in CSS */
@@ -102,7 +102,7 @@
       overflow: hidden; 
     }
     .seg button { 
-      padding: 0.375rem 0.75rem; 
+      padding: 0.35rem 0.6rem; 
       font-size: 0.875rem; 
     }
     .seg .on { 
@@ -130,7 +130,7 @@
     }
 
     .label { 
-      font-size: 0.75rem; 
+      font-size: 0.7rem; 
       font-weight: 600; 
       letter-spacing: 0.05em; /* tracking-wide */
       color: var(--ink-600); 
@@ -279,43 +279,52 @@
   </div>
   <p class="text-[11px] mt-2 text-ink-500">Exact inputs override bins for decisions; Attempt% still uses nearest bins.</p>
 </section>
-
-<!-- OPTIONAL: Wind direction segmented (place under Context or Scenario if desired) -->
-<section class="card card-pad" id="windDirCard">
-  <h2 class="text-sm font-semibold mb-3">Wind Direction</h2>
-  <div class="seg" role="tablist" aria-label="Wind Direction">
-    <button class="on"   data-dir="calm"   aria-pressed="true">Calm</button>
-    <button class="off"  data-dir="head">Head</button>
-    <button class="off"  data-dir="tail">Tail</button>
-    <button class="off"  data-dir="crossL">Cross ⟵</button>
-    <button class="off"  data-dir="crossR">Cross ⟶</button>
-  </div>
-</section>
       <!-- Query controls -->
-      <section class="card card-pad">
+      <section class="card card-pad" id="scenarioCard">
         <h2 class="text-sm font-semibold mb-3">Scenario</h2>
+      
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Yard line drives a hidden #distance (FG yards = yard line + 17, capped 67) -->
           <div>
-            <label class="label" for="distance">Distance (yd)</label>
-            <input id="distance" type="range" min="18" max="68" value="45" class="w-full" />
-            <div class="text-xs text-ink-600 mt-1"><span id="distanceVal">45</span> yds</div>
+            <label class="label" for="yardline">Yard line (opp)</label>
+            <input id="yardline" type="range" min="1" max="50" value="28" class="w-full" />
+            <div class="text-xs text-ink-600 mt-1">
+              <span id="yardlineVal">28</span> yd • FG <span id="distanceVal">45</span> yds
+            </div>
+            <!-- hidden but kept so existing JS (Parts 1 & 3) continues to read #distance -->
+            <input id="distance" type="range" min="18" max="68" value="45" class="w-full hidden" />
           </div>
+      
           <div>
             <label class="label" for="temp">Temp (°F)</label>
             <input id="temp" type="range" min="0" max="110" value="60" class="w-full" />
             <div class="text-xs text-ink-600 mt-1"><span id="tempVal">60</span> °F</div>
           </div>
+      
           <div>
             <label class="label" for="wind">Wind (mph)</label>
             <input id="wind" type="range" min="0" max="25" value="5" class="w-full" />
             <div class="text-xs text-ink-600 mt-1"><span id="windVal">5</span> mph</div>
           </div>
+      
+          <div>
+            <label class="label">Wind Direction</label>
+            <div class="seg w-full" id="windDirCard" role="tablist" aria-label="Wind Direction">
+              <button class="on"  data-dir="calm"  aria-pressed="true">Calm</button>
+              <button class="off" data-dir="head">Head</button>
+              <button class="off" data-dir="tail">Tail</button>
+              <button class="off" data-dir="crossL">Cross ⟵</button>
+              <button class="off" data-dir="crossR">Cross ⟶</button>
+            </div>
+          </div>
+      
           <div class="flex items-end gap-2">
             <button class="btn btn-ghost" id="resetBtn">Reset</button>
             <button class="btn btn-primary" id="applyBtn">Apply</button>
           </div>
         </div>
       </section>
+      
 
     </aside>
 
@@ -982,9 +991,10 @@
           row = best;
         }
 
-        return row ? +row.prob_mean : 0.5;
-      }
+        const base = row ? +row.prob_mean : 0.5;
+        return this._calBlend(base, env, Math.round(adj.distance), !!row);
 
+      }
 
       // Kicker delta on logit scale
       getKickerDeltaLogit(kickerId, distance){
@@ -1020,6 +1030,29 @@
         }
         return { delta_logit: dl, se: Math.sqrt(varSum) };
       }
+
+      _calTarget(env, d) {
+        const A = (env==='indoor')
+          ? [[25,0.97],[35,0.94],[45,0.88],[55,0.73],[63,0.52]]
+          : [[25,0.965],[35,0.92],[45,0.84],[55,0.69],[63,0.46]];
+        if (d<=A[0][0]) return A[0][1];
+        if (d>=A[A.length-1][0]) return A[A.length-1][1];
+        for (let i=1;i<A.length;i++){
+          const [x1,y1]=A[i-1], [x2,y2]=A[i];
+          if (d<=x2){ const t=(d-x1)/(x2-x1); return y1 + t*(y2-y1); }
+        }
+        return 0.5;
+      }
+      _calBlend(pGrid, env, d, rowFound){
+        const target = this._calTarget(env, d);
+        const lg=v=>{ v=Math.min(Math.max(v,1e-6),1-1e-6); return Math.log(v/(1-v)); };
+        const sg=x=> 1/(1+Math.exp(-x));
+        const baseLogit   = lg(pGrid);
+        const targetLogit = lg(target);
+        const blend = rowFound ? 0.35 : 0.65;
+        return sg(baseLogit*(1-blend) + targetLogit*blend);
+      }
+
 
       // Optional: coupled attempt given kicker delta and sensitivity
       getCoupledAttemptProb({
@@ -1359,6 +1392,58 @@ async function deriveTeamsFromDepthCharts(csvUrl){
   }else{ initSelectors(); }
 })();
 </script>
+
+<script>
+  (function(){
+    const yl   = document.getElementById('yardline');
+    const ylV  = document.getElementById('yardlineVal');
+    const dist = document.getElementById('distance');     // hidden
+    const dV   = document.getElementById('distanceVal');
+  
+    const clamp = (x,a,b)=> Math.max(a, Math.min(b,x));
+    const ylToDist  = y => clamp(+y + 17, 18, 67);
+    const distToYL  = d => clamp(+d - 17, 1, 50);
+  
+    function paintYL(){
+      if(!yl) return;
+      const min=+yl.min||1, max=+yl.max||50, v=+yl.value;
+      const pct=(v-min)/(max-min)*100;
+      const dangerStart=((43-min)/(max-min))*100; // 43yl ~ 60-yd FG
+      yl.style.background =
+        `linear-gradient(90deg,#3b82f6 0% ${pct}%,#e5e7eb ${pct}% ${dangerStart}%,#ef4444 ${dangerStart}% 100%)`;
+    }
+  
+    function syncFromYL(){
+      const y = +yl.value;
+      const d = ylToDist(y);
+      if(ylV) ylV.textContent = y;
+      if(dV)  dV.textContent  = d;
+      if(dist){
+        dist.value = d;
+        // fire the existing listeners that already update window.state and charts
+        dist.dispatchEvent(new Event('input',  {bubbles:true}));
+        dist.dispatchEvent(new Event('change', {bubbles:true}));
+      }
+      paintYL();
+    }
+  
+    // init from current state.distance, fallback to 45
+    const st = window.state || {};
+    const initD = Number.isFinite(+st.distance) ? +st.distance : 45;
+    if(yl) yl.value = distToYL(initD);
+    syncFromYL();
+  
+    yl && yl.addEventListener('input', syncFromYL);
+  
+    // keep yard line in sync when Reset/Apply are pressed
+    document.getElementById('resetBtn')?.addEventListener('click', ()=>{
+      if(yl) yl.value = distToYL(45);
+      syncFromYL();
+    });
+    document.getElementById('applyBtn')?.addEventListener('click', syncFromYL);
+  })();
+  </script>
+  
 
 <!-- =========================
 FG Pro UI v4 — Part 4/6 (Make% Chart)
@@ -2132,10 +2217,11 @@ Paste this <script> block near the end of index.html AFTER Parts 1–5.
       addRow('FG vs Punt', res.actions.FG_vs_Punt.mean, res.actions.FG_vs_Punt.ci);
   
       const ctxLabel = `${st.scoreBin||'close'} • ${st.timeBin||'mid'} • ${st.ytgBin||'med'} • ${st.env||'indoor'}`;
+      const yl = Math.max(1, Math.min(50, d - 17));
       const header = `<div class="flex items-center justify-between mb-3">
         <div>
           <div class="text-sm font-semibold">Decision Edge (${m})</div>
-          <div class="text-[12px] text-ink-500">At ${d} yards • ${ctxLabel}</div>
+          <div class="text-[12px] text-ink-500">At ${d} yards (yard line ${yl}) • ${ctxLabel}</div>
         </div>
         <div class="flex gap-2 items-center">
           <div class="pill">League Make: ${(pL*100).toFixed(1)}%</div>
