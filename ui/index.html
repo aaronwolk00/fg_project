@@ -379,9 +379,10 @@
     const tempVal     = document.getElementById('tempVal');
     const windVal     = document.getElementById('windVal');
 
-    const scoreBin = document.getElementById('scoreBin');
-    const timeBin  = document.getElementById('timeBin');
-    const ytgBin   = document.getElementById('ytgBin');
+    const scoreBin = document.getElementById('scoreBin') || null;
+    const timeBin  = document.getElementById('timeBin')  || null;
+    const ytgBin   = document.getElementById('ytgBin')   || null;
+
 
     const statusText    = document.getElementById('statusText');
     const dataVersionEl = document.getElementById('dataVersion');
@@ -460,9 +461,10 @@
     sync();
 
     // --- Context selects
-    scoreBin.addEventListener('change', ()=>state.scoreBin=scoreBin.value);
-    timeBin.addEventListener('change', ()=>state.timeBin=timeBin.value);
-    ytgBin.addEventListener('change', ()=>state.ytgBin=ytgBin.value);
+    if (scoreBin) scoreBin.addEventListener('change', ()=> state.scoreBin = scoreBin.value);
+    if (timeBin)  timeBin.addEventListener('change',  ()=> state.timeBin  = timeBin.value);
+    if (ytgBin)   ytgBin.addEventListener('change',   ()=> state.ytgBin   = ytgBin.value);
+
 
     // --- Tabs
     const tabButtons = [...document.querySelectorAll('.tab-btn')];
@@ -480,11 +482,14 @@
     tabButtons.forEach(btn=>btn.addEventListener('click', ()=>switchTab(btn.dataset.tab)));
 
     // --- Footer status helpers
-    function setStatus(msg){ statusText.textContent = msg; }
+    function setStatus(msg){ if (statusText) statusText.textContent = msg; }
     function setVersions(dataV, schemaV){
-      state.versions.data = dataV; state.versions.schema = schemaV;
-      dataVersionEl.textContent = dataV; schemaVersionEl.textContent = schemaV;
+      state.versions.data = dataV;
+      state.versions.schema = schemaV;
+      if (dataVersionEl)   dataVersionEl.textContent   = dataV;
+      if (schemaVersionEl) schemaVersionEl.textContent = schemaV;
     }
+
 
     // --- Apply/Reset hooks (wire to models in later parts)
     document.getElementById('applyBtn').addEventListener('click', ()=>{
@@ -786,7 +791,7 @@
           deltasByDist: base + '/kicker_deltas_by_distance.json',
           sens:  base + '/attempt_sensitivity.json',
           roster: base + '/nfl_kicker_roster.json',
-          stadiums: '/stadiums.json',
+          stadiums: base + '/stadiums.json',
           manifest: base + '/manifest.json'
         };
   
@@ -864,6 +869,8 @@
         const cR = Math.round((+wCross||0)*1000)/1000;
         const aR = Math.round((+alt||0)/50)*50;
 
+
+
         // Build key parts only for axes the grid actually has
         const parts = [env, dR, tR];
         if (this.hasDirAxis) parts.push(wR, hR, cR);
@@ -872,6 +879,14 @@
         return parts.join('|');
       }
   
+    _atKey(env, distance, score_bin, time_bin, ytg_bin, hash = null){
+      const dR = Math.round(+distance);
+      const s  = String(score_bin || 'close');
+      const t  = String(time_bin  || 'mid');
+      const y  = String(ytg_bin   || 'med');
+      const h  = hash ? String(hash) : '';
+      return [env, dR, s, t, y, h].join('|');
+    }
       // ----------- getters -----------
       getVersions(){
         const dataV = this._manifest?.generated_at_epoch ? new Date(this._manifest.generated_at_epoch*1000).toISOString() : 'local';
@@ -881,6 +896,29 @@
       getRoster(){ return this._roster; }
       getTeams(){ return this._teams.slice(); }
       getKickers(team){ return this._kickersByTeam.get(team)||[]; }
+
+      getKickersByTeam(team){  // alias for callers that prefer this name
+        return this.getKickers(team);
+      }
+
+      getAttemptProb({ env='indoor', distance, score_bin='close', time_bin='mid', ytg_bin='med', hash=null } = {}){
+        const key = this._atKey(env, distance, score_bin, time_bin, ytg_bin, hash);
+        const row = this._attemptIdx.get(key);
+        if (row) return +row.prob_attempt_mean;
+
+        // Fallback: nearest distance within same context
+        let best = null, bd = 1e9;
+        for (const r of (this._attempt.rows || [])){
+          if ((r.env || 'indoor') !== env) continue;
+          if (String(r.score_bin || 'close') !== score_bin) continue;
+          if (String(r.time_bin  || 'mid')   !== time_bin) continue;
+          if (String(r.ytg_bin   || 'med')   !== ytg_bin) continue;
+          const d = Math.abs((+r.distance) - (+distance));
+          if (d < bd){ bd = d; best = r; }
+        }
+        return best ? +best.prob_attempt_mean : 0.5;
+      }
+
   
       // League make probability (no kicker deltas applied)
       // Replace your getMakeProb with this version

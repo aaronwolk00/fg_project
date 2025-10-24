@@ -1,271 +1,307 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """
-05_kicker_hier_bayes.py — Distance-smoothed, recency-weighted kicker make deltas.
+Hierarchical Bayesian kicker model (PyMC / PyTensor) — robust I/O.
 
-Inputs (from 01_ingest / 02_features in cfg.output_dir):
-  - curated_fg.parquet          (needs: distance, fg_made, game_date, kicker_id, kicker_name, season_year, posteam, home_team)
-  - features_fg.parquet         (adds: temp_F, wind_mph, wind_dir_deg, air_density_ratio, wind_head_mps, wind_cross_mps, etc.)
+Changes vs prior:
+- Infers 'made' from many schemas (field_goal_result, fg_result, is_good, etc.).
+- CLI overrides: --made-col, --kicker-id-col, --env-col.
+- Still exports per-kicker logit deltas by distance (18..68) and an ArviZ .nc.
 
-Outputs:
-  - ui/kicker_deltas_logit_banded.json   # legacy, for current UI (short/mid/long/xlong)
-  - ui/kicker_deltas_by_distance.json    # v2, 18..68 per-kicker deltas
-  - artifacts/kicker_deltas_by_distance.parquet
-  - logs/kicker_hier_bayes_report.txt
+Example:
+  python F_kicker_hier_bayes.py ^
+    --data .\artifacts\features_fg.parquet ^
+    --made-col field_goal_result ^
+    --kicker-id-col kicker_id ^
+    --num-samples 600 --num-tune 600 --target-accept 0.9 ^
+    --out .\artifacts\kicker_hier_bayes.nc ^
+    --export .\artifacts\kicker_deltas_by_distance.parquet
 """
 
 from __future__ import annotations
-
-import json
-import logging
-import math
-from dataclasses import dataclass
+import argparse, sys
 from pathlib import Path
-from typing import Dict, List, Tuple
-
 import numpy as np
 import pandas as pd
+import pymc as pm
+import pytensor.tensor as pt
+import arviz as az
 
-from A_config import Config, setup_logging, ensure_dir
+# -------------------- Defaults --------------------
+BASE_DIR = Path(__file__).resolve().parent
+ART      = BASE_DIR / "artifacts"
+DEFAULT_DATA_CANDIDATES = [
+    ART / "features_fg.parquet",
+    ART / "curated_fg.parquet",
+    BASE_DIR / "kicks_training.csv",
+]
 
-# ---------------------------- Config knobs ----------------------------
-DIST_MIN, DIST_MAX = 18, 68
-DISTANCES = np.arange(DIST_MIN, DIST_MAX + 1)
+# Accept many label columns (strings or 0/1)
+MADE_SYNONYMS = [
+    "made", "is_made", "fg_made", "made_fg", "is_good", "good", "fg_good",
+    "kick_made", "kick_good", "y", "label"
+]
+MADE_STRING_RESULT_COLS = [
+    "field_goal_result", "fg_result", "result", "kick_result", "outcome"
+]  # expect strings like "made/good/missed/blocked/no good"
 
-# Recency / smoothing
-RECENCY_HALF_LIFE_DAYS = 360.0
-KERNEL_SIGMA = 2.0  # distance smoothing (yards)
+KICKER_ID_SYNONYMS = [
+    "kicker_id","player_id","gsis_id","nfl_id","pfr_player_id","id","player"
+]
+ENV_SYNONYMS = ["env","indoor_outdoor","environment","roof_env"]
 
-# Prior strength by band
-PRIOR_STRENGTH_BY_BAND = {
-    "short": 150.0,  # <=39
-    "mid":   120.0,  # 40-49
-    "long":   80.0,  # 50-59
-    "xlong":  20.0,  # >=60 (let data speak, but still stabilize)
-}
+# -------------------- Helpers --------------------
 
-# ---------------------------- Helpers ----------------------------
+def _auto_data() -> str | None:
+    for p in DEFAULT_DATA_CANDIDATES:
+        if p.exists():
+            return str(p)
+    return None
 
-def dist_band(d: int) -> str:
-    if d <= 39:  return "short"
-    if d <= 49:  return "mid"
-    if d <= 59:  return "long"
-    return "xlong"
+def _load_df(path: str) -> pd.DataFrame:
+    p = Path(path)
+    if p.suffix.lower()==".parquet":
+        return pd.read_parquet(p)
+    if p.suffix.lower()==".csv":
+        return pd.read_csv(p)
+    raise SystemExit(f"Unsupported data file: {p}")
 
-def logit(p: float, eps: float = 1e-12) -> float:
-    p = min(max(p, eps), 1 - eps)
-    return math.log(p / (1 - p))
+def _coerce_bool01(s: pd.Series) -> pd.Series:
+    """Coerce a column to 0/1 (bool/int). Works for bools, 0/1 ints, 'True'/'False', etc."""
+    x = s.copy()
+    if x.dtype == bool:
+        return x.astype(int)
+    if pd.api.types.is_numeric_dtype(x):
+        return (x.astype(float) > 0).astype(int)
+    # string-like
+    y = x.astype(str).str.strip().str.lower()
+    return y.isin(["1","true","t","y","yes","made","good","success"]).astype(int)
 
-def exp_recency_weight(age_days: float, half_life: float = RECENCY_HALF_LIFE_DAYS) -> float:
-    return 0.5 ** (max(age_days, 0.0) / max(half_life, 1.0))
+def _infer_made(df: pd.DataFrame, override: str|None) -> pd.Series:
+    if override and override in df.columns:
+        col = df[override]
+        if pd.api.types.is_string_dtype(col):
+            # map strings
+            y = col.astype(str).str.strip().str.lower()
+            return y.isin(["made","good","success"]).astype(int)
+        return _coerce_bool01(col)
 
-def gaussian_kernel(dx: np.ndarray, sigma: float = KERNEL_SIGMA) -> np.ndarray:
-    return np.exp(-0.5 * (dx / sigma) ** 2)
+    # hard boolean/01 columns
+    for c in MADE_SYNONYMS:
+        if c in df.columns:
+            return _coerce_bool01(df[c])
 
-@dataclass
-class BandedPrior:
-    p_league: float
-    alpha0: float
-    beta0: float
+    # string result columns
+    for c in MADE_STRING_RESULT_COLS:
+        if c in df.columns:
+            y = df[c].astype(str).str.strip().str.lower()
+            return y.isin(["made","good","g","successful","success"]).astype(int)
 
-# ---------------------------- Core ----------------------------
+    raise SystemExit(
+        "Could not infer 'made'. Supply --made-col <colname> or add one of: "
+        f"{', '.join(MADE_SYNONYMS + MADE_STRING_RESULT_COLS)}"
+    )
 
-def build_recency_weights(df: pd.DataFrame) -> pd.DataFrame:
-    today = pd.to_datetime(df["game_date"].max())
-    age_days = (today - df["game_date"]).dt.days.astype(float)
-    w = age_days.apply(exp_recency_weight)
-    return w
+def _infer_kicker_id(df: pd.DataFrame, override: str|None) -> pd.Series:
+    if override and override in df.columns:
+        return df[override].astype(str)
+    for c in KICKER_ID_SYNONYMS:
+        if c in df.columns:
+            return df[c].astype(str)
+    raise SystemExit("Could not infer a kicker id column. Use --kicker-id-col or add one of: "
+                     + ", ".join(KICKER_ID_SYNONYMS))
 
-def league_curve(df: pd.DataFrame) -> Dict[int, float]:
-    """Smoothed league make probability by distance d in DISTANCES."""
-    # Effective weights = recency only. We'll smooth across distance via kernel around each d.
-    df = df.copy()
-    df["w_rec"] = build_recency_weights(df)
-    out = {}
-    for d in DISTANCES:
-        k = gaussian_kernel(df["distance"].values - d, KERNEL_SIGMA)
-        w = df["w_rec"].values * k
-        n_eff = w.sum()
-        s_eff = (w * df["fg_made"].values).sum()
-        p = (s_eff / n_eff) if n_eff > 0 else 0.5
-        out[int(d)] = float(p)
-    return out
+def _infer_env(df: pd.DataFrame, override: str|None) -> pd.Series:
+    if override and override in df.columns:
+        s = df[override]
+    else:
+        s = None
+        for c in ENV_SYNONYMS:
+            if c in df.columns:
+                s = df[c]; break
+        if s is None:
+            return pd.Series(["indoor"]*len(df), index=df.index)
+    s = s.astype(str).str.lower().str.strip()
+    return np.where(s.isin(["outdoor","o","open"]), "outdoor", "indoor")
 
-def prior_strength_for_distance(d: int) -> float:
-    return PRIOR_STRENGTH_BY_BAND[dist_band(d)]
+def _prepare_df(path: str, made_col: str|None, kid_col: str|None, env_col: str|None) -> pd.DataFrame:
+    df = _load_df(path).copy()
 
-def kicker_curves(df: pd.DataFrame, league_p: Dict[int, float]) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """
-    Returns:
-      - df_delta_d: rows (kicker_id, kicker_name, distance, attempts_eff, p_post, delta_logit, se_logit)
-      - df_banded:  aggregated legacy bands for UI
-    """
-    log = logging.getLogger("kicker")
-    df = df.copy()
-    df["w_rec"] = build_recency_weights(df)
+    # Outcome
+    df["made"] = _infer_made(df, made_col)
 
-    # Pre-group by kicker for efficiency
-    curves = []
-    band_rows = []
+    # IDs & names
+    df["kicker_id"] = _infer_kicker_id(df, kid_col)
+    if "kicker_name" not in df.columns:
+        for c in ["player_name","name","full_name","player"]:
+            if c in df.columns:
+                df["kicker_name"] = df[c]; break
+        if "kicker_name" not in df.columns:
+            df["kicker_name"] = df["kicker_id"]
 
-    for kid, g in df.groupby("kicker_id", sort=False):
-        kname = str(g["kicker_name"].iloc[0]) if "kicker_name" in g.columns else kid
-        # pre-cache arrays
-        gd = g["distance"].values.astype(float)
-        gm = g["fg_made"].values.astype(float)
-        gw = g["w_rec"].values.astype(float)
+    # Env + numerics
+    df["env"] = _infer_env(df, env_col)
 
-        # Distance-level posteriors
-        for d in DISTANCES:
-            k = gaussian_kernel(gd - d, KERNEL_SIGMA)
-            w = gw * k
-            n_eff = float(w.sum())
-            s_eff = float((w * gm).sum())
+    for c, dflt in {"distance":45, "temp_F":60, "wind_mph":0, "altitude_m":0}.items():
+        if c not in df.columns:
+            df[c] = dflt
+        df[c] = pd.to_numeric(df[c], errors="coerce").fillna(dflt)
 
-            pL = float(league_p[int(d)])
-            strength = float(prior_strength_for_distance(int(d)))
-            a0 = strength * pL
-            b0 = strength * (1.0 - pL)
+    if "obs_weight" not in df.columns:
+        df["obs_weight"] = 1.0
 
-            # Posterior ~ Beta(a0 + s_eff, b0 + (n_eff - s_eff)) (treat s_eff as "soft successes")
-            alpha = a0 + s_eff
-            beta = b0 + max(n_eff - s_eff, 0.0)
-            p_post = alpha / (alpha + beta)
+    # reasonable ranges
+    df = df[(df["distance"]>=18) & (df["distance"]<=68)].copy()
+    return df
 
-            # delta on logit scale
-            dlogit = logit(p_post) - logit(pL)
+# -------------------- Features --------------------
 
-            # approximate se of logit via delta method
-            var_p = (alpha * beta) / (((alpha + beta) ** 2) * (alpha + beta + 1.0))
-            eps = 1e-9
-            var_logit = var_p / (max(p_post, eps) ** 2 * max(1 - p_post, eps) ** 2)
-            se_logit = float(np.sqrt(max(var_logit, 1e-12)))
+def make_rbf_basis(x: np.ndarray, centers: np.ndarray, width: float) -> np.ndarray:
+    x = x[:, None]
+    return np.exp(-0.5 * ((x - centers[None,:]) / width)**2)
 
-            curves.append({
-                "kicker_id": kid, "kicker_name": kname,
-                "distance": int(d),
-                "attempts_eff": n_eff,
-                "p_post": float(p_post),
-                "delta_logit": float(dlogit),
-                "se_logit": se_logit,
-            })
+def build_design(df: pd.DataFrame):
+    x_d = df["distance"].to_numpy(float)
+    xc  = x_d.mean()
+    xz_d = (x_d - xc) / 10.0
 
-        # Legacy bands (aggregate with recency weights)
-        g2 = g.copy()
-        g2["band"] = g2["distance"].astype(int).apply(lambda x: dist_band(x))
-        for band, gb in g2.groupby("band"):
-            n_eff = float(gb["w_rec"].sum())
-            s_eff = float((gb["w_rec"] * gb["fg_made"]).sum())
-            # League prior by band's representative distance
-            rep_d = {"short": 35, "mid": 45, "long": 55, "xlong": 63}[band]
-            pL = league_p.get(rep_d, 0.5)
-            strength = PRIOR_STRENGTH_BY_BAND[band]
-            a0, b0 = strength * pL, strength * (1 - pL)
-            alpha = a0 + s_eff
-            beta = b0 + max(n_eff - s_eff, 0.0)
-            p_post = alpha / (alpha + beta)
-            dlogit = logit(p_post) - logit(pL)
-            var_p = (alpha * beta) / (((alpha + beta) ** 2) * (alpha + beta + 1.0))
-            eps = 1e-9
-            var_logit = var_p / (max(p_post, eps) ** 2 * max(1 - p_post, eps) ** 2)
-            se_logit = float(np.sqrt(max(var_logit, 1e-12)))
-            band_rows.append({
-                "kicker_id": kid, "kicker_name": kname,
-                "band": band, "n_eff": n_eff,
-                "delta_logit": float(dlogit), "se": se_logit
-            })
+    centers = np.arange(20, 69, 8)  # 20..68 step 8
+    width = 6.0
+    Phi = make_rbf_basis(x_d, centers, width)
 
-    df_delta_d = pd.DataFrame(curves)
-    df_banded = pd.DataFrame(band_rows)
-    return df_delta_d, df_banded
+    temp = (df["temp_F"].to_numpy(float) - 60.0)/20.0
+    wind = df["wind_mph"].to_numpy(float)/10.0
+    alt  = df["altitude_m"].to_numpy(float)/1000.0
+    env  = (df["env"].astype(str).str.lower()=="outdoor").to_numpy(int)
 
-# ---------------------------- IO / CLI ----------------------------
+    X = np.column_stack([Phi, temp, wind, alt, env])
+    colnames = [f"rbf_{i}" for i in range(Phi.shape[1])] + ["temp","wind","alt","outdoor"]
+
+    kicker_ids, inv = np.unique(df["kicker_id"].astype(str), return_inverse=True)
+    k_idx = inv.astype(int)
+
+    y = df["made"].astype(int).to_numpy()
+    w = df["obs_weight"].astype(float).to_numpy()
+
+    meta = {
+        "centers": centers, "width": width, "xc": xc,
+        "design_cols": colnames,
+        "kicker_ids": kicker_ids,
+        "kicker_names": df.groupby("kicker_id")["kicker_name"].first().reindex(kicker_ids).to_numpy(object),
+    }
+    return X, xz_d, y, w, k_idx, meta
+
+# -------------------- Model --------------------
+
+def build_model(X, xz_d, y, k_idx, min_kicks=15):
+    n, p = X.shape
+    K = k_idx.max() + 1
+    _, counts = np.unique(k_idx, return_counts=True)
+    prior_scale = np.where(counts >= min_kicks, 1.0, 0.3).astype("float32")
+
+    with pm.Model() as m:
+        beta = pm.Normal("beta", sigma=1.0, shape=p)
+        intercept = pm.Normal("intercept", sigma=2.0)
+
+        sigma_a = pm.HalfNormal("sigma_a", sigma=1.0)
+        sigma_b = pm.HalfNormal("sigma_b", sigma=0.5)
+        a_raw = pm.Normal("a_raw", 0.0, 1.0, shape=K)
+        b_raw = pm.Normal("b_raw", 0.0, 1.0, shape=K)
+
+        # NOTE: prior_scale is per-kicker; broadcast via index at likelihood time
+        a_k = a_raw * sigma_a
+        b_k = b_raw * sigma_b
+
+        eta = intercept + pt.dot(pt.as_tensor_variable(X), beta) \
+              + a_k[k_idx] + b_k[k_idx] * pt.as_tensor_variable(xz_d) * prior_scale[k_idx]
+
+        pm.Bernoulli("y", logit_p=eta, observed=y)
+
+    return m
+
+def sample_posterior(model, num_samples=800, num_tune=800, target_accept=0.9, seed=42):
+    with model:
+        idata = pm.sample(
+            draws=num_samples, tune=num_tune, target_accept=target_accept,
+            chains=2, random_seed=seed, progressbar=True
+        )
+    return idata
+
+# -------------------- Posterior utilities --------------------
+
+def posterior_deltas_by_distance(idata, meta, distances=np.arange(18,69)):
+    beta = idata.posterior["beta"].stack(draw=("chain","draw")).values     # [p,S]
+    intercept = idata.posterior["intercept"].stack(draw=("chain","draw")).values  # [S]
+    sigma_a = idata.posterior["sigma_a"].stack(draw=("chain","draw")).values
+    sigma_b = idata.posterior["sigma_b"].stack(draw=("chain","draw")).values
+    a_raw   = idata.posterior["a_raw"].stack(draw=("chain","draw")).values  # [K,S]
+    b_raw   = idata.posterior["b_raw"].stack(draw=("chain","draw")).values  # [K,S]
+
+    centers = meta["centers"]; width = meta["width"]; xc = meta["xc"]
+    def rbf_grid(d): return np.exp(-0.5 * ((d - centers)/width)**2)
+
+    rows=[]
+    K = a_raw.shape[0]
+    for k in range(K):
+        a_k = a_raw[k] * sigma_a
+        b_k = b_raw[k] * sigma_b
+        grid={}
+        for d in distances:
+            Phi = rbf_grid(d)
+            X_fix = np.concatenate([Phi, [0,0,0,0]])       # neutral context
+            eta_L = intercept + beta.T @ X_fix             # [S]
+            dz = (d - xc)/10.0
+            eta_K = eta_L + a_k + b_k * dz
+            delta = eta_K - eta_L
+            grid[int(d)] = {"delta_logit": float(delta.mean()),
+                            "se": float(delta.std(ddof=1))}
+        rows.append({
+            "kicker_id": str(meta["kicker_ids"][k]),
+            "kicker_name": str(meta["kicker_names"][k]),
+            "by_distance": grid
+        })
+    return pd.DataFrame(rows)
+
+# (compat) optional
+def posterior_predict(*args, **kwargs):  # keeps J or other imports happy
+    raise NotImplementedError("posterior_predict is not used by the exporter.")
+
+# -------------------- CLI --------------------
 
 def main():
-    import argparse
-    ap = argparse.ArgumentParser(description="Build kicker deltas with distance smoothing + recency weighting.")
-    ap.add_argument("--output-dir")
-    ap.add_argument("--ui-dir")
-    ap.add_argument("--log-level", default="INFO")
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--data", default=None)
+    ap.add_argument("--made-col", default=None, help="Override column to derive made (0/1 or string)")
+    ap.add_argument("--kicker-id-col", default=None, help="Override kicker id column")
+    ap.add_argument("--env-col", default=None, help="Override environment column")
+    ap.add_argument("--min-kicks", type=int, default=15)
+    ap.add_argument("--num-samples", type=int, default=800)
+    ap.add_argument("--num-tune", type=int, default=800)
+    ap.add_argument("--target-accept", type=float, default=0.9)
+    ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--out", default=str(ART / "kicker_hier_bayes.nc"))
+    ap.add_argument("--export", default=str(ART / "kicker_deltas_by_distance.parquet"))
     args = ap.parse_args()
 
-    cfg = Config.from_args(output_dir=args.output_dir, ui_dir=args.ui_dir, log_level=args.log_level)
-    setup_logging(cfg.log_level)
-    log = logging.getLogger("05_kicker_hier_bayes")
+    data_path = args.data or _auto_data()
+    if not data_path:
+        print("No training data found. Looked for:\n  --data <your file>\n  " +
+              "\n  ".join(str(p.relative_to(BASE_DIR)) for p in DEFAULT_DATA_CANDIDATES))
+        sys.exit(1)
 
-    artifacts = Path(cfg.output_dir)
-    ui_dir = Path(cfg.ui_dir)
-    logs_dir = ensure_dir(Path(cfg.output_dir).parent / "logs")
+    df = _prepare_df(data_path, args.made_col, args.kicker_id_col, args.env_col)
 
-    fg_cur = artifacts / "curated_fg.parquet"
-    if not fg_cur.exists():
-        raise FileNotFoundError(f"Missing {fg_cur}. Run 01_ingest.py first.")
+    X, xz, y, w, k_idx, meta = build_design(df)
+    model = build_model(X, xz, y, k_idx, min_kicks=args.min_kicks)
+    idata = sample_posterior(model, args.num_samples, args.num_tune, args.target_accept, args.seed)
 
-    df_fg = pd.read_parquet(fg_cur)
-    required = ["distance", "fg_made", "game_date", "kicker_id", "kicker_name"]
-    for c in required:
-        if c not in df_fg.columns:
-            raise ValueError(f"curated_fg.parquet missing required column: {c}")
+    out_nc = Path(args.out); out_nc.parent.mkdir(parents=True, exist_ok=True)
+    az.to_netcdf(idata, out_nc)
 
-    df_fg = df_fg[(df_fg["distance"] >= DIST_MIN) & (df_fg["distance"] <= DIST_MAX)].copy()
-    df_fg["game_date"] = pd.to_datetime(df_fg["game_date"], errors="coerce")
+    df_out = posterior_deltas_by_distance(idata, meta)
+    out_pq = Path(args.export); out_pq.parent.mkdir(parents=True, exist_ok=True)
+    df_out.to_parquet(out_pq, index=False)
 
-    # League curve by distance
-    league_p = league_curve(df_fg)
-
-    # Kicker curves
-    df_delta_d, df_banded = kicker_curves(df_fg, league_p)
-
-    # Persist per-distance parquet + JSON
-    dist_parquet = artifacts / "kicker_deltas_by_distance.parquet"
-    df_delta_d.to_parquet(dist_parquet, index=False)
-
-    dist_json = ui_dir / "kicker_deltas_by_distance.json"
-    # Compact JSON: one record per kicker with {distance: {delta_logit,se,attempts_eff}}
-    payload = []
-    for kid, g in df_delta_d.groupby("kicker_id"):
-        kname = str(g["kicker_name"].iloc[0])
-        by_d = {
-            int(r.distance): {
-                "delta_logit": float(r.delta_logit),
-                "se": float(r.se_logit),
-                "attempts_eff": float(r.attempts_eff)
-            } for r in g.itertuples(index=False)
-        }
-        payload.append({"kicker_id": str(kid), "kicker_name": kname, "by_distance": by_d})
-    with dist_json.open("w", encoding="utf-8") as f:
-        json.dump(payload, f)
-    log.info("Wrote %s and %s", dist_parquet, dist_json)
-
-    # Legacy banded JSON (for existing UI)
-    band_json = ui_dir / "kicker_deltas_logit_banded.json"
-    band_payload = []
-    grp = df_banded.groupby("kicker_id", sort=False)
-    for kid, g in grp:
-        kname = str(g["kicker_name"].iloc[0])
-        bands = {}
-        for _, r in g.iterrows():
-            bands[r["band"]] = {"delta_logit": float(r["delta_logit"]), "se": float(r["se"]), "n_eff": float(r["n_eff"])}
-        attempts_eff = float(df_delta_d[df_delta_d["kicker_id"] == kid]["attempts_eff"].sum())
-        band_payload.append({"kicker_id": str(kid), "kicker_name": kname, "attempts_eff": attempts_eff, "bands": bands})
-    with band_json.open("w", encoding="utf-8") as f:
-        json.dump(band_payload, f, indent=2)
-    log.info("Wrote %s", band_json)
-
-    # Simple text report
-    report = logs_dir / "kicker_hier_bayes_report.txt"
-    with report.open("w", encoding="utf-8") as f:
-        f.write("== Kicker Hierarchical (Empirical Bayes) Report ==\n")
-        f.write(f"Kick distances: {DIST_MIN}..{DIST_MAX}\n")
-        f.write(f"Kernel sigma: {KERNEL_SIGMA} yards; Recency half-life: {RECENCY_HALF_LIFE_DAYS} days\n")
-        f.write("Prior strengths by band: " + str(PRIOR_STRENGTH_BY_BAND) + "\n\n")
-        sample = df_delta_d.sample(min(len(df_delta_d), 20), random_state=42)
-        for r in sample.itertuples():
-            f.write(f"{r.kicker_name:20s} d={r.distance:2d} Δlogit={r.delta_logit:+.3f} se={r.se_logit:.3f}\n")
-    log.info("Wrote %s", report)
-
-    log.info("Done.")
+    print(f"Wrote {out_pq} and {out_nc}")
 
 if __name__ == "__main__":
     main()
